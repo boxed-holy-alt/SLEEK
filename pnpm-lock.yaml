@@ -296,6 +296,25 @@ importers:
         specifier: ^0.0.197
         version: 0.0.197
 
+  proxy:
+    dependencies:
+      '@mercuryworkshop/proxy-bootstrap':
+        specifier: '*'
+        version: 0.0.5
+      express:
+        specifier: ^4.21.2
+        version: 4.21.2
+    devDependencies:
+      '@mercuryworkshop/scramjet':
+        specifier: workspace:*
+        version: link:../packages/core
+      '@mercuryworkshop/scramjet-controller':
+        specifier: workspace:*
+        version: link:../packages/controller
+      '@mercuryworkshop/scramjet-utils':
+        specifier: workspace:*
+        version: link:../packages/utils
+
 packages:
 
   '@babel/code-frame@7.26.2':
@@ -620,6 +639,9 @@ packages:
 
   '@mercuryworkshop/libcurl-transport@2.0.5':
     resolution: {integrity: sha512-YkAPEAWTEUZZkEOejmRQJxNHw90+kNQnoiSqa5H2sExHBXXdGSXEtg7/35A53U8MDVaznpAwjVbXRONSsfatzw==}
+
+  '@mercuryworkshop/proxy-bootstrap@0.0.5':
+    resolution: {integrity: sha512-StS7Lr1nzk4mxTzGeqM9fF56ZFvvcBxcz9/4qSj+rHLp7rgLJ4GKyzlJxelYcuqBv4t25ud7rDtdSiu/diaaXg==}
 
   '@mercuryworkshop/proxy-transports@1.0.2':
     resolution: {integrity: sha512-zgD+JMYNSx8LxVLWwGPPVnoDHjoh1GqqwUJIjhIwCwhy+Z7g+MhmiTJvCcRPAo7qXXbqJwIrpBJduRSOrjMV7g==}
@@ -2177,10 +2199,6 @@ packages:
     resolution: {integrity: sha512-0KI/607xoxSToH7GjN1FfSbLoU0+btTicjsQSWQlh/hZykN8KpmMf7uYwPW3R+akZ6R/w18ZlXSHBYXiYUPO3g==}
     engines: {node: '>= 0.10'}
 
-  ipaddr.js@2.2.0:
-    resolution: {integrity: sha512-Ag3wB2o37wslZS19hZqorUnrnzSkpOVy+IiiDEiTqNubEYpYuHWIf6K4psgN2ZWKExS4xhVCrRVfb/wfW8fWJA==}
-    engines: {node: '>= 10'}
-
   ipaddr.js@2.3.0:
     resolution: {integrity: sha512-Zv/pA+ciVFbCSBBjGfaKUya/CcGmUHzTydLMaTwrUUEM2DIEO3iZvueGxmacvmN50fGpGVKeTXpb2LcYQxeVdg==}
     engines: {node: '>= 10'}
@@ -3714,6 +3732,13 @@ snapshots:
   '@mercuryworkshop/libcurl-transport@2.0.5':
     dependencies:
       libcurl.js: 0.7.4
+
+  '@mercuryworkshop/proxy-bootstrap@0.0.5':
+    dependencies:
+      '@mercuryworkshop/wisp-js': 0.4.1
+      tar: 7.5.1
+    transitivePeerDependencies:
+      - utf-8-validate
 
   '@mercuryworkshop/proxy-transports@1.0.2': {}
 
@@ -5504,8 +5529,6 @@ snapshots:
 
   ipaddr.js@1.9.1: {}
 
-  ipaddr.js@2.2.0: {}
-
   ipaddr.js@2.3.0: {}
 
   irregular-plurals@3.5.0: {}
@@ -6582,7 +6605,7 @@ snapshots:
       express: 4.21.2
       graceful-fs: 4.2.11
       http-proxy-middleware: 2.0.9(@types/express@4.17.24)
-      ipaddr.js: 2.2.0
+      ipaddr.js: 2.3.0
       launch-editor: 2.11.1
       open: 10.2.0
       p-retry: 6.2.1

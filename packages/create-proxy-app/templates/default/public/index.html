@@ -4,6 +4,7 @@
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<title>SLEEK</title>
+		<link rel="icon" type="image/png" href="/sleek-logo.png" />
 		<link rel="stylesheet" href="/index.css" />
 
 				<meta name="robots" content="noindex" />
@@ -12,6 +13,7 @@
 	</head>
 	<body>
 		<nav id="sj-tabs" aria-label="Open tabs">
+			<button id="sj-home-tab" class="sj-tab active" type="button"><span class="sj-tab-title">New tab</span><span class="sj-tab-close" aria-label="Close tab">&times;</span></button>
 			<button id="sj-new-tab" type="button" aria-label="New tab">+</button>
 		</nav>
 		<section id="sj-settings-panel" hidden role="dialog" aria-modal="true" aria-labelledby="sj-settings-title">
@@ -33,7 +35,7 @@
 			<button id="sj-forward" type="button" aria-label="Forward">&#8594;</button>
 			<button id="sj-reload" type="button" aria-label="Reload">&#8635;</button>
 			<button id="sj-home" type="button" aria-label="Home">&#8962;</button>
-			<input id="sj-tab-address" type="text" placeholder="Search or enter address" />
+			<input id="sj-tab-address" type="text" value="sleek://home" placeholder="Search or enter address" />
 			<input id="sj-tab-search-engine" value="https://duckduckgo.com/?q=%s" type="hidden" />
 			<button id="sj-bookmark" type="button" aria-label="Bookmark">&#9734;</button>
 			<button id="sj-settings" type="button" aria-label="Settings" title="Settings">
@@ -43,7 +45,7 @@
 				</svg>
 			</button>
 		</form>
-		<div title="Scramjet Logo" class="flex-center logo-wrapper header-center">
+		<div title="SLEEK Logo" class="flex-center logo-wrapper header-center">
 			<h1>SLEEK</h1>
 		</div>
 		<form id="sj-form" class="flex-center" autocomplete="off">
@@ -54,12 +56,26 @@
 			/>
 			<input id="sj-address" type="text" placeholder="Search the web freely" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
 		</form>
+		<section id="sj-quick-links" aria-label="Quick links">
+			<p class="quick-links-heading">Quick links</p>
+			<div class="quick-links-list">
+				<button class="quick-link" type="button" data-quick-url="https://www.youtube.com"><img class="quick-link-icon" src="https://www.youtube.com/favicon.ico" alt="" /><span>YouTube</span></button>
+				<button class="quick-link" type="button" data-quick-url="https://github.com"><img class="quick-link-icon" src="https://github.com/favicon.ico" alt="" /><span>GitHub</span></button>
+				<button class="quick-link" type="button" data-quick-url="https://incinerateplus.opik.net/"><img class="quick-link-icon" src="https://incinerateplus.opik.net/favicon.png" alt="" /><span>Incinerate+</span></button>
+				<button class="quick-link" type="button" data-quick-url="https://www.tiktok.com"><img class="quick-link-icon" src="https://www.tiktok.com/favicon.ico" alt="" /><span>TikTok</span></button>
+				<button class="quick-link" type="button" data-quick-url="https://discord.com"><img class="quick-link-icon" src="https://favicon.run/favicon?domain=discord.com&sz=32" alt="" /><span>Discord</span></button>
+				<button class="quick-link" type="button" data-quick-url="https://open.spotify.com"><img class="quick-link-icon" src="https://open.spotify.com/favicon.ico" alt="" /><span>Spotify</span></button>
+				<button class="quick-link" type="button" data-quick-url="https://www.reddit.com"><img class="quick-link-icon" src="https://www.reddit.com/favicon.ico" alt="" /><span>Reddit</span></button>
+				<button class="quick-link" type="button" data-quick-url="https://www.google.com"><img class="quick-link-icon" src="https://www.google.com/favicon.ico" alt="" /><span>Google</span></button>
+			</div>
+		</section>
 		<div class="desc left-margin">
 			<p id="sj-error"></p>
 			<pre id="sj-error-code"></pre>
 		</div>
 		<div id="sj-frame-wrapper">
 			<div id="sj-frames"></div>
+			<div id="sj-loading" hidden role="status" aria-live="polite"><span class="loading-mark" aria-hidden="true"></span><strong>Loading page</strong><span class="loading-dots" aria-hidden="true">...</span></div>
 		</div>
 
 		<script src="/index.js"></script>

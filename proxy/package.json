@@ -5,6 +5,7 @@
 	"main": "server.js",
 	"type": "module",
 	"scripts": {
+		"build": "node --check server.js && node --check public/index.js",
 		"dev": "node server.js",
 		"start": "node server.js"
 	},
@@ -16,8 +17,8 @@
 		"express": "^4.21.2"
 	},
 	"devDependencies": {
-		"@mercuryworkshop/scramjet-utils": "*",
-		"@mercuryworkshop/scramjet-controller": "*",
-		"@mercuryworkshop/scramjet": "*"
+		"@mercuryworkshop/scramjet-utils": "workspace:*",
+		"@mercuryworkshop/scramjet-controller": "workspace:*",
+		"@mercuryworkshop/scramjet": "workspace:*"
 	}
 }

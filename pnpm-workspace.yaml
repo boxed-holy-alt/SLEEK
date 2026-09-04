@@ -1,4 +1,5 @@
 packages:
+  - proxy
   - packages/core
   - packages/runway
   - packages/rpc

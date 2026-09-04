@@ -8,6 +8,8 @@
 	"license": "AGPL-3.0-only",
 	"packageManager": "pnpm@10.12.1",
 	"scripts": {
+		"build": "pnpm --filter proxy-app-template build",
+		"start": "pnpm --filter proxy-app-template start",
 		"dev": "node --no-warnings=ExperimentalWarning devserver.ts",
 		"proxy": "node proxy/server.js",
 		"dev:debug": "DEBUG=1 node --no-warnings=ExperimentalWarning devserver.ts",

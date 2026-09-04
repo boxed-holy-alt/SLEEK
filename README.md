@@ -1,6 +1,6 @@
-<h1 align="center">Scramjet</h1>
+<h1 align="center">SLEEK</h1>
 <div align="center">
-  <img src="assets/scramjet.png" height="200" />
+  <img src="proxy/public/sleek-logo.png" height="200" alt="SLEEK logo" />
 </div>
 
 <div align="center">
@@ -11,12 +11,12 @@
 
 ---
 
-Scramjet is an experimental interception-based web proxy designed to evade internet censorship and bypass arbitrary browser restrictions.<br><br>
-Scramjet allows you to sandbox arbitrary web content, bypass CORS restrictions on loading websites, and instrument and debug websites inside the browser itself. This is accomplished through a combination of interception, rewriting, and sandboxing techniques. You can learn more about the technical details <a href="https://developer.puter.com/blog/how-I-ported-the-web-to-the-web/"><strong>here</strong></a>.<br><br>
+SLEEK is a focused web proxy powered by Scramjet and Wisp. It provides a streamlined browsing interface with tabbed navigation, search, favorites, quick links, cloaking options, and a panic key.<br><br>
+The underlying Scramjet engine uses interception, rewriting, and sandboxing techniques to run remote web content inside the browser. You can learn more about the technical details <a href="https://developer.puter.com/blog/how-I-ported-the-web-to-the-web/"><strong>here</strong></a>.<br><br>
 
 ## Supported Sites
 
-Some of the popular websites that Scramjet supports include:
+Some of the popular websites that SLEEK can open through its Scramjet engine include:
 
 - [Google](https://google.com)
 - [Youtube](https://youtube.com)
@@ -31,42 +31,12 @@ Some of the popular websites that Scramjet supports include:
 
 ## Development
 
-### Dependencies
-
-- Recent versions of `node.js` and `pnpm`
-- `rustup`
-- `wasm-bindgen`
-- [Binaryen's `wasm-opt`](https://github.com/WebAssembly/binaryen)
-- [this `wasm-snip` fork](https://github.com/r58Playz/wasm-snip)
-
-#### Building
-
-- Clone the repository with `git clone --recursive https://github.com/MercuryWorkshop/scramjet`
-- Install the dependencies with `pnpm i`
-- Change directories with `cd packages/core`
-- Build the rewriter with `pnpm rewriter:build`
-- Build Scramjet with `pnpm build`
-
-### Running Scramjet Locally
-
-You can run the Scramjet dev server when running this command at the root
+Install, validate, and start SLEEK from the repository root:
 
 ```sh
-pnpm dev
+pnpm i
+pnpm build
+pnpm start
 ```
 
-The demo page for scramjet should now be running at <http://localhost:4141> and should rebuild upon a file being changed (excluding the rewriter).
-
-### Running a Dedicated Proxy
-
-The repository demo is not the proxy server. To create and run the dedicated proxy app:
-
-```sh
-pnpm --filter create-proxy-app build
-node packages/create-proxy-app/dist/index.js proxy --default
-cd proxy
-pnpm install --ignore-workspace
-pnpm dev
-```
-
-The dedicated proxy runs at <http://localhost:3030> and serves remote pages through Scramjet and Wisp.
+The proxy runs at <http://localhost:3030>.
