@@ -64,6 +64,9 @@ export const Omnibox: Component = function (cx) {
 					class="url-input"
 					type="text"
 					value={use(browserState.url)}
+					on:input={(e: InputEvent) => {
+						browserState.url = (e.currentTarget as HTMLInputElement).value;
+					}}
 					spellcheck="false"
 					placeholder="Enter URL or search..."
 				/>

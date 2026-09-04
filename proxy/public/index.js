@@ -30,6 +30,7 @@ let tabCounter = 0;
 const tabs = [];
 let initPromise;
 const homeAddress = "sleek://home";
+
 async function init() {
 	if (initPromise) return initPromise;
 	initPromise = (async () => {
@@ -57,7 +58,9 @@ function createTab() {
 		if (tab === activeTab) address.value = url;
 		if (tab === activeTab) tabAddress.value = url;
 	});
-	tab.frame = controller.createFrame(tab.frameElement, { plugins: [new $scramjetUtils.HttpCachePlugin(), watcher, new $scramjetUtils.CatchEscapedLinksPlugin((url) => new URL(`/?goto=${encodeURIComponent(url.href)}`, location.origin))] });
+	tab.frame = controller.createFrame(tab.frameElement, {
+		plugins: [new $scramjetUtils.HttpCachePlugin(), watcher, new $scramjetUtils.CatchEscapedLinksPlugin((url) => new URL(`/?goto=${encodeURIComponent(url.href)}`, location.origin))],
+	});
 	tabs.push(tab);
 	selectTab(tab);
 	return tab;
@@ -103,9 +106,14 @@ async function navigate(url) {
 		return;
 	}
 	if (!/^[a-z][a-z\d+.-]*:\/\//i.test(url)) {
-		const looksLikeHost = url.includes(".") || url.startsWith("localhost:") || url.startsWith("[");
-		if (looksLikeHost) url = `https://${url}`;
-		else url = (searchEngine?.value || tabSearchEngine?.value || "https://duckduckgo.com/?q=%s").replace("%s", encodeURIComponent(url));
+		const looksLikeHost =
+			url.includes(".") || url.startsWith("localhost:") || url.startsWith("[");
+		if (looksLikeHost) {
+			url = `https://${url}`;
+		} else {
+			const template = searchEngine?.value || tabSearchEngine?.value || "https://duckduckgo.com/?q=%s";
+			url = template.replace("%s", encodeURIComponent(url));
+		}
 	}
 	activeTab.frame.go(url);
 	activeTab.button.querySelector(".sj-tab-title").textContent = new URL(url).hostname;
@@ -128,13 +136,60 @@ particlesToggle.addEventListener("change", () => {
 });
 animationsToggle.addEventListener("change", () => document.body.classList.toggle("animations-off", !animationsToggle.checked));
 compactToggle.addEventListener("change", () => document.body.classList.toggle("compact-home", compactToggle.checked));
-for (const button of document.querySelectorAll("[data-settings-page]")) { button.addEventListener("click", () => { const page = button.dataset.settingsPage; document.querySelectorAll("[data-settings-page]").forEach((item) => item.classList.toggle("active", item === button)); document.querySelectorAll("[data-settings-page-content]").forEach((item) => item.classList.toggle("active", item.dataset.settingsPageContent === page)); }); }
-for (const button of document.querySelectorAll("[data-theme-choice]")) { button.addEventListener("click", () => { document.body.dataset.theme = button.dataset.themeChoice; document.querySelectorAll("[data-theme-choice]").forEach((item) => item.classList.toggle("active", item === button)); }); }
-for (const button of document.querySelectorAll("[data-accent]")) { button.addEventListener("click", () => { const accent = button.dataset.accent; document.body.style.setProperty("--accent", accent); document.querySelectorAll(".logo-wrapper h1").forEach((item) => { item.style.color = accent; }); document.querySelectorAll("[data-accent]").forEach((item) => item.classList.toggle("active", item === button)); }); }
+for (const button of document.querySelectorAll("[data-settings-page]")) {
+	button.addEventListener("click", () => {
+		const page = button.dataset.settingsPage;
+		document.querySelectorAll("[data-settings-page]").forEach((item) => item.classList.toggle("active", item === button));
+		document.querySelectorAll("[data-settings-page-content]").forEach((item) => item.classList.toggle("active", item.dataset.settingsPageContent === page));
+	});
+}
+for (const button of document.querySelectorAll("[data-theme-choice]")) {
+	button.addEventListener("click", () => {
+		document.body.dataset.theme = button.dataset.themeChoice;
+		document.querySelectorAll("[data-theme-choice]").forEach((item) => item.classList.toggle("active", item === button));
+	});
+}
+for (const button of document.querySelectorAll("[data-accent]")) {
+	button.addEventListener("click", () => {
+		const accent = button.dataset.accent;
+		document.body.style.setProperty("--accent", accent);
+		document.querySelectorAll(".logo-wrapper h1").forEach((item) => {
+			item.style.color = accent;
+		});
+		document.querySelectorAll("[data-accent]").forEach((item) => item.classList.toggle("active", item === button));
+	});
+}
+for (const button of document.querySelectorAll("[data-theme-choice]")) {
+	button.addEventListener("click", () => {
+		document.body.dataset.theme = button.dataset.themeChoice;
+		document.querySelectorAll("[data-theme-choice]").forEach((item) => item.classList.toggle("active", item === button));
+	});
+}
 brandName.addEventListener("input", () => { document.querySelectorAll(".logo-wrapper h1").forEach((item) => item.textContent = brandName.value.trim() || "SLEEK"); });
-themeUpload.addEventListener("change", () => { const file = themeUpload.files[0]; if (!file) return; themeUploadStatus.textContent = `${file.name} ready to import.`; if (file.name.endsWith(".json")) { const reader = new FileReader(); reader.onload = () => { try { const theme = JSON.parse(reader.result); if (theme.accent) document.body.style.setProperty("--accent", theme.accent); if (theme.name) { brandName.value = theme.name; document.querySelectorAll(".logo-wrapper h1").forEach((item) => item.textContent = theme.name); } themeUploadStatus.textContent = `${file.name} applied.`; } catch { themeUploadStatus.textContent = "Invalid theme JSON."; } }; reader.readAsText(file); } });
-for (const button of document.querySelectorAll("[data-density-choice]")) { button.addEventListener("click", () => { document.body.dataset.density = button.dataset.densityChoice; document.querySelectorAll("[data-density-choice]").forEach((item) => item.classList.toggle("active", item === button)); }); }
-for (const button of document.querySelectorAll("[data-engine]")) { button.addEventListener("click", () => { const engine = button.dataset.engine; searchEngine.value = engine; tabSearchEngine.value = engine; document.querySelectorAll("[data-engine]").forEach((item) => item.classList.toggle("active", item === button)); }); }
+themeUpload.addEventListener("change", () => {
+	const file = themeUpload.files[0];
+	if (!file) return;
+	themeUploadStatus.textContent = `${file.name} ready to import.`;
+	if (file.name.endsWith(".json")) {
+		const reader = new FileReader();
+		reader.onload = () => { try { const theme = JSON.parse(reader.result); if (theme.accent) document.body.style.setProperty("--accent", theme.accent); if (theme.name) brandName.value = theme.name; themeUploadStatus.textContent = `${file.name} applied.`; } catch { themeUploadStatus.textContent = "Invalid theme JSON."; } };
+		reader.readAsText(file);
+	}
+});
+for (const button of document.querySelectorAll("[data-density-choice]")) {
+	button.addEventListener("click", () => {
+		document.body.dataset.density = button.dataset.densityChoice;
+		document.querySelectorAll("[data-density-choice]").forEach((item) => item.classList.toggle("active", item === button));
+	});
+}
+for (const button of document.querySelectorAll("[data-engine]")) {
+	button.addEventListener("click", () => {
+		const engine = button.dataset.engine;
+		searchEngine.value = engine;
+		tabSearchEngine.value = engine;
+		document.querySelectorAll("[data-engine]").forEach((item) => item.classList.toggle("active", item === button));
+	});
+}
 document.getElementById("sj-reset-home").addEventListener("click", () => navigate(homeAddress));
 
 document.getElementById("sj-tab-address-bar").addEventListener("submit", (event) => {

@@ -56,3 +56,17 @@ pnpm dev
 ```
 
 The demo page for scramjet should now be running at <http://localhost:4141> and should rebuild upon a file being changed (excluding the rewriter).
+
+### Running a Dedicated Proxy
+
+The repository demo is not the proxy server. To create and run the dedicated proxy app:
+
+```sh
+pnpm --filter create-proxy-app build
+node packages/create-proxy-app/dist/index.js proxy --default
+cd proxy
+pnpm install --ignore-workspace
+pnpm dev
+```
+
+The dedicated proxy runs at <http://localhost:3030> and serves remote pages through Scramjet and Wisp.

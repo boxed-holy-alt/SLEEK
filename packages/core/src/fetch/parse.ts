@@ -27,6 +27,12 @@ export type QueryParamKey = keyof typeof QP;
 
 export type QueryParams = Partial<Record<QueryParamKey, string>>;
 
+export type ScramjetRequestMode =
+	| "cors"
+	| "no-cors"
+	| "same-origin"
+	| "navigate";
+
 const QP_INVERSE: Record<string, QueryParamKey> = (() => {
 	const inv: Record<string, QueryParamKey> = {};
 	for (const key of Object_keys(QP) as QueryParamKey[]) {
@@ -108,7 +114,7 @@ export function parseRequest(
 	const fetchMode = ["cors", "no-cors", "same-origin", "navigate"].includes(
 		params.mode
 	)
-		? params.mode
+		? (params.mode as ScramjetRequestMode)
 		: undefined;
 	const destination =
 		(params.destination as RequestDestination | undefined) ||
