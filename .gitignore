@@ -1,4 +1,7 @@
 node_modules
+.env
+.env.*
+!.env.example
 dist
 packages/core/rewriter/target
 packages/core/rewriter/wasm/out

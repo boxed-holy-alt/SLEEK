@@ -11,7 +11,7 @@
 
 		<script src="/bootstrap-init.js"></script>
 	</head>
-	<body>
+	<body class="is-home">
 		<nav id="sj-tabs" aria-label="Open tabs">
 			<button id="sj-home-tab" class="sj-tab active" type="button"><span class="sj-tab-title">New tab</span><span class="sj-tab-close" aria-label="Close tab">&times;</span></button>
 			<button id="sj-new-tab" type="button" aria-label="New tab">+</button>
@@ -30,6 +30,23 @@
 				</div>
 			</div>
 		</section>
+		<section id="sj-account-panel" hidden role="dialog" aria-modal="true" aria-labelledby="sj-account-title">
+			<div class="account-panel-card">
+				<header class="settings-header"><div><span class="settings-kicker">SLEEK</span><h2 id="sj-account-title">Account</h2></div><button id="sj-account-close" type="button" aria-label="Close account">&times;</button></header>
+				<div class="account-profile">
+					<label class="account-avatar" title="Upload profile picture"><span id="sj-account-avatar" aria-hidden="true">&#xF4D7;</span><input id="sj-account-avatar-file" type="file" accept="image/*" /></label>
+					<div><strong id="sj-account-name-label">Guest</strong><small>Saved locally on this device</small></div>
+				</div>
+				<label class="account-name-field">Display name<input id="sj-account-name" type="text" maxlength="24" placeholder="Guest" /></label>
+				<div class="account-section account-preferences">
+					<label class="history-toggle"><span>Incognito mode</span><input id="sj-incognito-toggle" type="checkbox" /><i></i></label>
+					<label class="account-select-field"><span>Language</span><select id="sj-language-select"><option value="en">English</option><option value="es">Español</option></select></label>
+					<label class="account-select-field"><span>Clock format</span><select id="sj-clock-select"><option value="24">24-hour</option><option value="12">12-hour (AM/PM)</option></select></label>
+					<div class="account-clock"><span>Local time</span><strong id="sj-account-clock">--:--</strong></div>
+				</div>
+				<div class="account-section history-section"><div class="account-section-heading"><strong>History</strong><button id="sj-clear-history" type="button" class="settings-action">Clear</button></div><label class="history-toggle"><span>Save browsing history</span><input id="sj-history-toggle" type="checkbox" checked /><i></i></label><div id="sj-history-list" class="history-list"><span class="history-empty">No browsing history yet</span></div></div>
+			</div>
+		</section>
 		<form id="sj-tab-address-bar">
 			<button id="sj-back" type="button" aria-label="Back">&#8592;</button>
 			<button id="sj-forward" type="button" aria-label="Forward">&#8594;</button>
@@ -37,17 +54,28 @@
 			<button id="sj-home" type="button" aria-label="Home">&#8962;</button>
 			<input id="sj-tab-address" type="text" value="sleek://home" placeholder="Search or enter address" />
 			<input id="sj-tab-search-engine" value="https://duckduckgo.com/?q=%s" type="hidden" />
-			<button id="sj-bookmark" type="button" aria-label="Bookmark">&#9734;</button>
+			<button id="sj-bookmark" type="button" aria-label="Bookmark" aria-pressed="false">&#9734;</button>
 			<button id="sj-settings" type="button" aria-label="Settings" title="Settings">
 				<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
 					<path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492M5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0"/>
 					<path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 0-1.255-.52zm-2.633.283c.246-.835 1.428-.835 1.674 0l.094.319a1.873 1.873 0 0 0 2.693 1.115l.291-.16c.764-.415 1.6.42 1.184 1.185l-.159.292a1.873 1.873 0 0 0 1.116 2.692l.318.094c.835.246.835 1.428 0 1.674l-.319.094a1.873 1.873 0 0 0-1.115 2.693l.16.291c.415.764-.42 1.6-1.185 1.184l-.291-.159a1.873 1.873 0 0 0-2.693 1.116l-.094.318c-.246.835-1.428.835-1.674 0l-.094-.319a1.873 1.873 0 0 0-2.692-1.115l-.292.16c-.764.415-1.6-.42-1.184-1.185l.159-.291A1.873 1.873 0 0 0 1.945 8.93l-.319-.094c-.835-.246-.835-1.428 0-1.674l.319-.094A1.873 1.873 0 0 0 3.06 4.377l-.16-.292c-.415-.764.42-1.6 1.185-1.184l.292.159a1.873 1.873 0 0 0 2.692-1.115z"/>
 				</svg>
 			</button>
+			<button id="sj-account" type="button" aria-label="Account" title="Account">
+				<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0"/><path fill-rule="evenodd" d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8m8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1"/></svg>
+			</button>
 		</form>
 		<div title="SLEEK Logo" class="flex-center logo-wrapper header-center">
 			<h1>SLEEK</h1>
 		</div>
+		<div id="sj-home-clock" class="home-clock" aria-label="Current local time">--:--</div>
+		<script>
+			try {
+				const clockLanguage = localStorage.getItem("sleek-language") === "es" ? "es-ES" : "en-US";
+				const clockHour12 = localStorage.getItem("sleek-clock-format") === "12";
+				document.getElementById("sj-home-clock").textContent = new Date().toLocaleTimeString(clockLanguage, { hour: "2-digit", minute: "2-digit", hour12: clockHour12 });
+			} catch {}
+		</script>
 		<form id="sj-form" class="flex-center" autocomplete="off">
 			<input
 				id="sj-search-engine"
@@ -56,6 +84,66 @@
 			/>
 			<input id="sj-address" type="text" placeholder="Search the web freely" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
 		</form>
+		<section id="sj-music-page" hidden aria-labelledby="sj-music-title">
+			<div class="music-page-header"><div><p class="music-eyebrow">SLEEKIFY / YOUTUBE MUSIC</p><h2 id="sj-music-title">Find your sound.</h2><p class="music-subtitle">Search and play full tracks without leaving SLEEK.</p></div><button id="sj-music-close" type="button" aria-label="Close music">&times;</button></div>
+			<div id="sj-music-search" class="music-search" role="search"><input id="sj-music-query" type="search" placeholder="Search artists, albums, mixes..." autocomplete="off" /><button id="sj-music-submit" type="button" aria-label="Search music">&#8594;</button></div>
+			<p id="sj-music-status" class="music-status">Search an artist, song or album to start listening.</p>
+			<section id="sj-music-results" class="music-results" aria-live="polite"></section>
+			<div class="music-player"><div id="sj-youtube-player" class="youtube-player-hidden"></div><div class="player-meta"><span class="player-state">SLEEKIFY / YOUTUBE</span><strong id="sj-now-playing">Nothing playing</strong><small id="sj-player-channel">Choose a result to play the full track.</small></div></div>
+			<script>
+				(() => {
+					const button = document.getElementById("sj-music-submit");
+					const input = document.getElementById("sj-music-query");
+					const status = document.getElementById("sj-music-status");
+					const results = document.getElementById("sj-music-results");
+					const playerHost = document.getElementById("sj-youtube-player");
+					const title = document.getElementById("sj-now-playing");
+					const channel = document.getElementById("sj-player-channel");
+					let player;
+					let playerReady;
+					function getPlayer() {
+						if (playerReady) return playerReady;
+						playerReady = new Promise((resolve) => {
+							const create = () => { player = new YT.Player(playerHost, { width: "1", height: "1", playerVars: { autoplay: 0, controls: 0, playsinline: 1 }, events: { onReady: () => resolve(player) } }); };
+							if (window.YT?.Player) return create();
+							window.onYouTubeIframeAPIReady = create;
+							const script = document.createElement("script"); script.id = "yt-iframe-api"; script.src = "https://www.youtube.com/iframe_api"; document.head.append(script);
+						});
+						return playerReady;
+					}
+					async function search() {
+						const query = input.value.trim();
+						if (!query) { status.textContent = "Type an artist, song or album first."; return; }
+						status.textContent = "Searching music...";
+						results.replaceChildren();
+						try {
+							const response = await fetch(`/api/music/search?q=${encodeURIComponent(query)}`);
+							const data = await response.json();
+							if (!response.ok) throw new Error(data.error || "Music search failed.");
+							for (const item of data) {
+								const row = document.createElement("button");
+								row.type = "button";
+								row.className = "music-result";
+								row.innerHTML = `<img src="${item.thumbnail}" alt=""><span><strong></strong><small></small></span><i>&#9654;</i>`;
+								row.querySelector("strong").textContent = item.title;
+								row.querySelector("small").textContent = `${item.channel} / YouTube`;
+								row.addEventListener("click", async () => { title.textContent = item.title; channel.textContent = `${item.channel} / Full track`; const youtube = await getPlayer(); youtube.loadVideoById(item.id); });
+								results.append(row);
+							}
+							status.textContent = data.length ? `${data.length} tracks found` : "No tracks found. Try another search.";
+						} catch (error) { status.textContent = error instanceof Error ? error.message : "Music search failed."; }
+					}
+					button.addEventListener("click", search);
+					input.addEventListener("keydown", (event) => { if (event.key === "Enter") { event.preventDefault(); search(); } });
+				})();
+			</script>
+		</section>
+		<section id="sj-saved-bar" aria-label="Saved" hidden>
+			<strong>Saved</strong>
+			<div id="sj-saved-links"></div>
+		</section>
+		<button id="sj-music-button" type="button" aria-label="Open pages" title="Open pages"><span class="music-menu-icon" aria-hidden="true"><i></i><i></i><i></i></span></button>
+		<nav id="sj-tools-panel" aria-label="SLEEK pages"><p>SLEEK PAGES</p><button type="button" data-panel-route="sleek://music" onclick="document.getElementById('sj-music-page').hidden = false; document.body.classList.remove('is-home'); document.getElementById('sj-frame-wrapper').style.display = 'none';"><span class="tool-icon">&#9835;</span><span><strong>Music</strong><small>Listen and unwind</small></span></button><button type="button" data-panel-route="sleek://games"><span class="tool-icon">&#9671;</span><span><strong>Games</strong><small>Take a quick break</small></span></button><button type="button" data-panel-route="sleek://notes"><span class="tool-icon">&#9998;</span><span><strong>Notes</strong><small>Keep an idea close</small></span></button></nav>
 		<section id="sj-quick-links" aria-label="Quick links">
 			<p class="quick-links-heading">Quick links</p>
 			<div class="quick-links-list">

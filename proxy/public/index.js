@@ -7,6 +7,19 @@ const framesElement = document.getElementById("sj-frames");
 const newTabButton = document.getElementById("sj-new-tab");
 const settingsButton = document.getElementById("sj-settings");
 const settingsPanel = document.getElementById("sj-settings-panel");
+const accountButton = document.getElementById("sj-account");
+const accountPanel = document.getElementById("sj-account-panel");
+const accountName = document.getElementById("sj-account-name");
+const accountNameLabel = document.getElementById("sj-account-name-label");
+const accountAvatar = document.getElementById("sj-account-avatar");
+const accountAvatarFile = document.getElementById("sj-account-avatar-file");
+const historyList = document.getElementById("sj-history-list");
+const historyToggle = document.getElementById("sj-history-toggle");
+const homeClock = document.getElementById("sj-home-clock");
+const incognitoToggle = document.getElementById("sj-incognito-toggle");
+const languageSelect = document.getElementById("sj-language-select");
+const clockSelect = document.getElementById("sj-clock-select");
+const accountClock = document.getElementById("sj-account-clock");
 const particlesToggle = document.getElementById("sj-particles-toggle");
 const animationsToggle = document.getElementById("sj-animations-toggle");
 const compactToggle = document.getElementById("sj-compact-toggle");
@@ -54,6 +67,22 @@ const error = document.getElementById("sj-error");
 const errorCode = document.getElementById("sj-error-code");
 const searchEngine = document.getElementById("sj-search-engine");
 const quickLinks = document.getElementById("sj-quick-links");
+const savedBar = document.getElementById("sj-saved-bar");
+const savedLinks = document.getElementById("sj-saved-links");
+const musicButton = document.getElementById("sj-music-button");
+const toolsPanel = document.getElementById("sj-tools-panel");
+const musicPage = document.getElementById("sj-music-page");
+const musicClose = document.getElementById("sj-music-close");
+const nowPlaying = document.getElementById("sj-now-playing");
+const playerChannel = document.getElementById("sj-player-channel");
+const youtubePlayerElement = document.getElementById("sj-youtube-player");
+const musicSearch = document.getElementById("sj-music-search");
+const musicSubmit = document.getElementById("sj-music-submit");
+const musicQuery = document.getElementById("sj-music-query");
+const musicStatus = document.getElementById("sj-music-status");
+const musicResults = document.getElementById("sj-music-results");
+let youtubePlayer;
+let youtubeReady;
 
 let controller;
 let activeTab;
@@ -61,6 +90,30 @@ let tabCounter = 0;
 const tabs = [];
 let initPromise;
 const homeAddress = "sleek://home";
+const musicAddress = "sleek://music";
+const ACCOUNT_KEY = "sleek-account";
+const HISTORY_KEY = "sleek-history";
+const HISTORY_ENABLED_KEY = "sleek-history-enabled";
+const LANGUAGE_KEY = "sleek-language";
+const CLOCK_FORMAT_KEY = "sleek-clock-format";
+let account;
+let browsingHistory;
+let historyEnabled = localStorage.getItem(HISTORY_ENABLED_KEY) !== "false";
+let incognitoMode = false;
+let language = localStorage.getItem(LANGUAGE_KEY) || "en";
+let clockFormat = localStorage.getItem(CLOCK_FORMAT_KEY) || "24";
+try {
+	account = JSON.parse(localStorage.getItem(ACCOUNT_KEY) || '{"name":"Guest","avatar":"\\uF4D7"}');
+	if (!account || typeof account !== "object") throw new Error();
+} catch {
+	account = { name: "Guest", avatar: "\uF4D7" };
+}
+try {
+	browsingHistory = JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]");
+	if (!Array.isArray(browsingHistory)) throw new Error();
+} catch {
+	browsingHistory = [];
+}
 const defaultQuickLinks = [
 	{ title: "YouTube", url: "https://www.youtube.com", favicon: "https://www.youtube.com/favicon.ico" },
 	{ title: "GitHub", url: "https://github.com", favicon: "https://github.com/favicon.ico" },
@@ -72,19 +125,177 @@ const defaultQuickLinks = [
 	{ title: "Google", url: "https://www.google.com", favicon: "https://www.google.com/favicon.ico" },
 ];
 const favoriteUrls = new Map();
+function canonicalizeUrl(url) {
+	try {
+		const parsed = new URL(url);
+		parsed.hash = "";
+		if (parsed.pathname === "/") parsed.pathname = "/";
+		return parsed.href;
+	} catch {
+		return url;
+	}
+}
 try {
 	const savedFavorites = JSON.parse(localStorage.getItem("sleek-favorites") || "[]");
 	if (Array.isArray(savedFavorites)) {
 		for (const favorite of savedFavorites) {
-			if (Array.isArray(favorite) && favorite.length === 2 && favorite[1]?.url) favoriteUrls.set(favorite[0], favorite[1]);
-			else if (favorite?.url) favoriteUrls.set(favorite.url, favorite);
+			if (Array.isArray(favorite) && favorite.length === 2 && favorite[1]?.url) {
+				const url = canonicalizeUrl(favorite[1].url);
+				favoriteUrls.set(url, { ...favorite[1], url });
+			} else if (favorite?.url) {
+				const url = canonicalizeUrl(favorite.url);
+				favoriteUrls.set(url, { ...favorite, url });
+			}
 		}
 	}
 } catch {
 	localStorage.removeItem("sleek-favorites");
 }
+function toggleBookmark(event) {
+	event.preventDefault();
+	event.stopPropagation();
+	const url = canonicalizeUrl(getBookmarkUrl() || "");
+	if (!url) return;
+	if (favoriteUrls.has(url)) favoriteUrls.delete(url);
+	else {
+		const details = siteDetails(url);
+		favoriteUrls.set(url, { title: details.title, url, favicon: details.favicon });
+	}
+	saveFavorites();
+	updateBookmarkState();
+	renderQuickLinks();
+}
+bookmarkButton.addEventListener("click", toggleBookmark);
 function saveFavorites() {
 	localStorage.setItem("sleek-favorites", JSON.stringify([...favoriteUrls]));
+}
+const friendlySiteNames = {
+	"youtube.com": "YouTube",
+	"github.com": "GitHub",
+	"google.com": "Google",
+	"discord.com": "Discord",
+	"spotify.com": "Spotify",
+	"reddit.com": "Reddit",
+	"tiktok.com": "TikTok",
+};
+function siteDetails(url, fallbackTitle = "") {
+	try {
+		const parsed = new URL(url);
+		const hostname = parsed.hostname.replace(/^www\./i, "");
+		return {
+			title:
+				friendlySiteNames[hostname] ||
+				(fallbackTitle && fallbackTitle !== parsed.hostname
+					? fallbackTitle
+					: hostname),
+			favicon: `${parsed.origin}/favicon.ico`,
+		};
+	} catch {
+		return { title: fallbackTitle || "Saved page", favicon: "" };
+	}
+}
+function saveAccount() {
+	localStorage.setItem(ACCOUNT_KEY, JSON.stringify(account));
+}
+function saveHistory() {
+	localStorage.setItem(HISTORY_KEY, JSON.stringify(browsingHistory));
+}
+function updateAccountClock() {
+	const now = new Date();
+	const formattedTime = now.toLocaleTimeString(language === "es" ? "es-ES" : "en-US", {
+		hour: "2-digit",
+		minute: "2-digit",
+		hour12: clockFormat === "12",
+	});
+	accountClock.textContent = formattedTime;
+	homeClock.textContent = formattedTime;
+}
+function applyLanguage() {
+	document.documentElement.lang = language;
+}
+function renderAccount() {
+	accountName.value = account.name || "Guest";
+	accountNameLabel.textContent = account.name || "Guest";
+	accountAvatar.textContent = account.avatar?.startsWith("data:") ? "" : "\uF4D7";
+	accountAvatar.parentElement.style.backgroundImage = account.avatar?.startsWith("data:")
+		? `url(${account.avatar})`
+		: "none";
+	accountAvatar.parentElement.classList.toggle("has-image", account.avatar?.startsWith("data:") === true);
+	historyToggle.checked = historyEnabled;
+	incognitoToggle.checked = incognitoMode;
+	languageSelect.value = language;
+	clockSelect.value = clockFormat;
+	updateAccountClock();
+	historyList.replaceChildren();
+	if (!browsingHistory.length) {
+		const empty = document.createElement("span");
+		empty.className = "history-empty";
+		empty.textContent = "No browsing history yet";
+		historyList.append(empty);
+		return;
+	}
+	for (const item of browsingHistory) {
+		const button = document.createElement("button");
+		button.type = "button";
+		button.className = "history-item";
+		button.title = item.url;
+		button.innerHTML = `<strong>${item.title}</strong><small>${new URL(item.url).hostname}</small>`;
+		button.addEventListener("click", () => {
+			accountPanel.hidden = true;
+			navigate(item.url).catch((navigationError) => showErrorScreen(navigationError.message, navigationError.stack));
+		});
+		historyList.append(button);
+	}
+}
+function recordHistory(url) {
+	if (!historyEnabled || incognitoMode) return;
+	const details = siteDetails(url);
+	browsingHistory = [
+		{ url, title: details.title, visitedAt: Date.now() },
+		...browsingHistory.filter((item) => item.url !== url),
+	].slice(0, 50);
+	saveHistory();
+}
+function addSiteLink(container, link) {
+	const details = siteDetails(link.url, link.title);
+	const button = document.createElement("button");
+	button.type = "button";
+	button.className = container === savedLinks ? "saved-link" : "quick-link";
+	button.title = link.url;
+	button.dataset.quickUrl = link.url;
+	const icon = document.createElement("img");
+	icon.className = "quick-link-icon";
+	icon.src = link.favicon || details.favicon;
+	icon.alt = "";
+	icon.onerror = () => {
+		const fallback = document.createElement("span");
+		fallback.className = "site-fallback-icon";
+		fallback.textContent = "🌐";
+		icon.replaceWith(fallback);
+	};
+	button.append(icon, document.createTextNode(details.title));
+	if (container === savedLinks) {
+		const item = document.createElement("div");
+		item.className = "saved-item";
+		const remove = document.createElement("button");
+		remove.type = "button";
+		remove.className = "saved-remove";
+		remove.title = "Remove from Saved";
+		remove.setAttribute("aria-label", `Remove ${details.title} from Saved`);
+		remove.textContent = "×";
+		remove.addEventListener("click", (event) => {
+			event.preventDefault();
+			event.stopPropagation();
+			favoriteUrls.delete(canonicalizeUrl(link.url));
+			saveFavorites();
+			renderQuickLinks();
+			updateBookmarkState();
+		});
+		item.append(button, remove);
+		container.append(item);
+	} else {
+		container.append(button);
+	}
 }
 function renderQuickLinks() {
 	quickLinks.replaceChildren();
@@ -94,24 +305,56 @@ function renderQuickLinks() {
 	quickLinks.append(heading);
 	const list = document.createElement("div");
 	list.className = "quick-links-list";
-	[...defaultQuickLinks, ...favoriteUrls.values()].forEach((link) => {
-		const button = document.createElement("button");
-		button.type = "button";
-		button.className = "quick-link";
-		button.title = link.url;
-		button.dataset.quickUrl = link.url;
-		button.innerHTML = `<img class="quick-link-icon" src="${link.favicon || "/sleek-logo.png"}" alt="" /><span>${link.title}</span>`;
-		list.append(button);
+	defaultQuickLinks.forEach((link) => {
+		addSiteLink(list, link);
 	});
 	quickLinks.append(list);
+	renderSavedLinks();
 }
-quickLinks.addEventListener("click", (event) => {
+function renderSavedLinks() {
+	savedLinks.replaceChildren();
+	const hasSaved = favoriteUrls.size > 0;
+	savedBar.hidden = !hasSaved;
+	document.body.classList.toggle("has-saved", hasSaved);
+	for (const link of favoriteUrls.values()) {
+		addSiteLink(savedLinks, link);
+	}
+	requestAnimationFrame(() => {
+		document.body.style.setProperty(
+			"--saved-bar-height",
+			hasSaved ? `${savedBar.getBoundingClientRect().bottom}px` : "120px",
+		);
+	});
+}
+function getBookmarkUrl() {
+	const rawUrl = activeTab?.url || tabAddress.value;
+	if (!/^https?:\/\//i.test(rawUrl)) return null;
+	try {
+		return canonicalizeUrl(rawUrl);
+	} catch {
+		return null;
+	}
+}
+function updateBookmarkState() {
+	const url = getBookmarkUrl();
+	const saved = Boolean(url && favoriteUrls.has(url));
+	bookmarkButton.classList.toggle("saved", saved);
+	bookmarkButton.textContent = saved ? "★" : "☆";
+	bookmarkButton.setAttribute("aria-pressed", String(saved));
+}
+const openQuickLink = (event) => {
 	const link = event.target.closest("[data-quick-url]");
 	if (!link) return;
 	event.preventDefault();
 	navigate(link.dataset.quickUrl).catch((navigationError) => showErrorScreen(navigationError.message, navigationError.stack));
-});
+};
+quickLinks.addEventListener("click", openQuickLink);
+savedLinks.addEventListener("click", openQuickLink);
+document.body.classList.add("is-home");
+renderQuickLinks();
 function showHome(tab) {
+	musicPage.hidden = true;
+	document.body.classList.add("is-home");
 	tab.frameElement.src = "about:blank";
 	tab.url = "";
 	tab.button.querySelector(".sj-tab-title").textContent = "New tab";
@@ -119,6 +362,21 @@ function showHome(tab) {
 	tabAddress.value = homeAddress;
 	frameWrapper.style.display = "none";
 	loadingScreen.hidden = true;
+}
+function showMusic(tab) {
+	if (!tab) return;
+	document.body.classList.remove("is-home");
+	toolsPanel.hidden = true;
+	musicButton.setAttribute("aria-expanded", "false");
+	musicPage.hidden = false;
+	frameWrapper.style.display = "none";
+	loadingScreen.hidden = true;
+	tab.frameElement.src = "about:blank";
+	tab.url = musicAddress;
+	tab.button.querySelector(".sj-tab-title").textContent = "Music";
+	address.value = musicAddress;
+	tabAddress.value = musicAddress;
+	updateBookmarkState();
 }
 function showLoading() {
 	loadingScreen.hidden = false;
@@ -142,6 +400,7 @@ function attachFrame(tab) {
 		tab.url = url;
 		if (tab === activeTab) address.value = url;
 		if (tab === activeTab) tabAddress.value = url;
+		if (tab === activeTab) updateBookmarkState();
 	});
 	tab.frame = controller.createFrame(tab.frameElement, { plugins: [new $scramjetUtils.HttpCachePlugin(), watcher, new $scramjetUtils.CatchEscapedLinksPlugin((url) => new URL(`/?goto=${encodeURIComponent(url.href)}`, location.origin))] });
 	tab.frameElement.addEventListener("load", () => { loadingScreen.hidden = true; }, { once: false });
@@ -175,7 +434,8 @@ function selectTab(tab) {
 	}
 	address.value = tab.url;
 	tabAddress.value = tab.url || homeAddress;
-	bookmarkButton.classList.toggle("saved", Boolean(tab.url && favoriteUrls.has(tab.url)));
+	updateBookmarkState();
+	document.body.classList.toggle("is-home", !tab.url);
 }
 
 function closeTab(tab) {
@@ -199,11 +459,16 @@ async function navigate(url) {
 	}
 	if (!activeTab) createTab();
 	url = url.trim();
-	if (!url) return;
+	if (!url || incognitoMode) return;
 	if (url.toLowerCase() === homeAddress) {
 		showHome(activeTab);
 		return;
 	}
+	if (url.toLowerCase() === musicAddress) {
+		showMusic(activeTab);
+		return;
+	}
+	document.body.classList.remove("is-home");
 	if (!/^[a-z][a-z\d+.-]*:\/\//i.test(url)) {
 		const looksLikeHost = url.includes(".") || url.startsWith("localhost:") || url.startsWith("[");
 		if (looksLikeHost) url = `https://${url}`;
@@ -214,6 +479,7 @@ async function navigate(url) {
 		return;
 	}
 	activeTab.url = url;
+	recordHistory(url);
 	address.value = url;
 	tabAddress.value = url;
 	activeTab.frame.go(url);
@@ -233,6 +499,58 @@ newTabButton.addEventListener("click", () => {
 
 settingsButton.addEventListener("click", () => {
 	settingsPanel.hidden = !settingsPanel.hidden;
+});
+accountButton.addEventListener("click", () => {
+	accountPanel.hidden = !accountPanel.hidden;
+	if (!accountPanel.hidden) renderAccount();
+});
+document.getElementById("sj-account-close").addEventListener("click", () => {
+	accountPanel.hidden = true;
+});
+accountPanel.addEventListener("click", (event) => {
+	if (event.target === accountPanel) accountPanel.hidden = true;
+});
+accountName.addEventListener("input", () => {
+	account.name = accountName.value.trim() || "Guest";
+	accountNameLabel.textContent = account.name;
+	saveAccount();
+});
+historyToggle.addEventListener("change", () => {
+	historyEnabled = historyToggle.checked;
+	localStorage.setItem(HISTORY_ENABLED_KEY, String(historyEnabled));
+});
+incognitoToggle.addEventListener("change", () => {
+	incognitoMode = incognitoToggle.checked;
+	document.body.classList.toggle("incognito-mode", incognitoMode);
+	updateBookmarkState();
+});
+languageSelect.addEventListener("change", () => {
+	language = languageSelect.value;
+	localStorage.setItem(LANGUAGE_KEY, language);
+	applyLanguage();
+	updateAccountClock();
+});
+clockSelect.addEventListener("change", () => {
+	clockFormat = clockSelect.value;
+	localStorage.setItem(CLOCK_FORMAT_KEY, clockFormat);
+	updateAccountClock();
+});
+accountAvatarFile.addEventListener("change", () => {
+	const file = accountAvatarFile.files?.[0];
+	if (!file || !file.type.startsWith("image/")) return;
+	const reader = new FileReader();
+	reader.addEventListener("load", () => {
+		if (typeof reader.result !== "string") return;
+		account.avatar = reader.result;
+		saveAccount();
+		renderAccount();
+	});
+	reader.readAsDataURL(file);
+});
+document.getElementById("sj-clear-history").addEventListener("click", () => {
+	browsingHistory = [];
+	saveHistory();
+	renderAccount();
 });
 document.getElementById("sj-settings-close").addEventListener("click", closeSettings);
 settingsPanel.addEventListener("click", (event) => {
@@ -293,17 +611,63 @@ backButton.addEventListener("click", () => activeTab?.frame.back());
 forwardButton.addEventListener("click", () => activeTab?.frame.forward());
 reloadButton.addEventListener("click", () => activeTab?.frame.reload());
 homeButton.addEventListener("click", () => navigate(homeAddress));
-bookmarkButton.addEventListener("click", () => {
-	const url = activeTab?.url || tabAddress.value;
-	if (!/^https?:\/\//i.test(url)) return;
-	if (favoriteUrls.has(url)) favoriteUrls.delete(url);
-	else favoriteUrls.set(url, { title: new URL(url).hostname, url });
-	saveFavorites();
-	bookmarkButton.classList.toggle("saved", favoriteUrls.has(url));
-	renderQuickLinks();
+musicButton.addEventListener("click", () => {
+	toolsPanel.hidden = false;
 });
-
-renderQuickLinks();
+for (const page of toolsPanel.querySelectorAll("[data-panel-route]")) {
+	page.addEventListener("click", () => {
+		const route = page.dataset.panelRoute;
+		if (route === musicAddress) {
+			showMusic(activeTab || createTab());
+			return;
+		}
+		toolsPanel.hidden = true;
+		musicButton.setAttribute("aria-expanded", "false");
+		navigate(route).catch((navigationError) => showErrorScreen(navigationError.message, navigationError.stack));
+	});
+}
+musicClose.addEventListener("click", () => navigate(homeAddress));
+async function playMusicResult(result) {
+	nowPlaying.textContent = result.title;
+	playerChannel.textContent = `${result.channel} / YouTube full track`;
+	const player = await loadYouTubePlayer();
+	player.loadVideoById(result.id);
+}
+function loadYouTubePlayer() {
+	if (youtubeReady) return youtubeReady;
+	youtubeReady = new Promise((resolve) => {
+		const create = () => { youtubePlayer = new YT.Player(youtubePlayerElement, { width: "1", height: "1", playerVars: { autoplay: 0, controls: 0, playsinline: 1 }, events: { onReady: () => resolve(youtubePlayer) } }); };
+		if (window.YT?.Player) return create();
+		window.onYouTubeIframeAPIReady = create;
+		const script = document.createElement("script"); script.id = "yt-iframe-api"; script.src = "https://www.youtube.com/iframe_api"; document.head.append(script);
+	});
+	return youtubeReady;
+}
+function renderMusicResults(results) {
+	musicResults.replaceChildren();
+	for (const result of results) {
+		const button = document.createElement("button"); button.type = "button"; button.className = "music-result";
+		button.innerHTML = `<img src="${result.thumbnail}" alt=""><span><strong></strong><small></small></span><i>&#9654;</i>`;
+		button.querySelector("strong").textContent = result.title; button.querySelector("small").textContent = `${result.channel} / YouTube`;
+		button.addEventListener("click", () => playMusicResult(result)); musicResults.append(button);
+	}
+}
+async function searchMusic() {
+	if (activeTab) showMusic(activeTab);
+	const query = musicQuery.value.trim(); if (!query) return;
+	musicStatus.textContent = "Searching music..."; musicResults.replaceChildren();
+	try { const response = await fetch(`/api/music/search?q=${encodeURIComponent(query)}`); const payload = await response.json(); if (!response.ok) throw new Error(payload.error || "Search failed."); renderMusicResults(payload); musicStatus.textContent = payload.length ? `${payload.length} tracks found` : "No tracks found. Try another search."; } catch (error) { musicStatus.textContent = error instanceof Error ? error.message : "Search failed."; }
+}
+musicSubmit.addEventListener("click", searchMusic);
+musicQuery.addEventListener("keydown", (event) => {
+	if (event.key === "Enter") {
+		event.preventDefault();
+		searchMusic();
+	}
+});
+applyLanguage();
+renderAccount();
+	setInterval(updateAccountClock, 1000);
 
 init().catch((startupError) => showErrorScreen(startupError.message, startupError.stack));
 

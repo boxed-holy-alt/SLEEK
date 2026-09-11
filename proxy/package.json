@@ -6,8 +6,8 @@
 	"type": "module",
 	"scripts": {
 		"build": "node --check server.js && node --check public/index.js",
-		"dev": "node server.js",
-		"start": "node server.js"
+		"dev": "node --env-file-if-exists=../.env server.js",
+		"start": "node --env-file-if-exists=../.env server.js"
 	},
 	"keywords": [],
 	"author": "",

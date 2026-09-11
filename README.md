@@ -75,6 +75,32 @@ Once started, SLEEK will be available at:
 http://localhost:3030
 ```
 
+### SLEEKIFY music search
+
+SLEEKIFY uses YouTube Data API v3 for search and the YouTube IFrame API for full-track playback. The API key is read only from the server environment; it is never bundled into the browser.
+
+#### Local setup
+
+Copy `.env.example` to `.env`, put the key after `YOUTUBE_API_KEY=`, and start the server:
+
+```sh
+cp .env.example .env
+pnpm start
+```
+
+Do not commit `.env`. It is ignored by Git.
+
+#### Render setup
+
+In the Render service dashboard, open **Environment**, choose **Add Environment Variable**, and add:
+
+```text
+Key: YOUTUBE_API_KEY
+Value: your_new_youtube_api_key
+```
+
+Use `pnpm start` as the Start Command. Render injects the variable before starting the server, so no terminal `export` is needed. After saving the variable, trigger a redeploy.
+
 ## Status
 
 SLEEK is still being worked on.
