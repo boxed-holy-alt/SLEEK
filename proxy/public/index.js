@@ -81,8 +81,33 @@ const musicSubmit = document.getElementById("sj-music-submit");
 const musicQuery = document.getElementById("sj-music-query");
 const musicStatus = document.getElementById("sj-music-status");
 const musicResults = document.getElementById("sj-music-results");
+const miniPlayer = document.getElementById("sj-mini-player");
+const miniPlayerHandle = document.getElementById("sj-mini-player-handle");
+const miniClose = document.getElementById("sj-mini-close");
+const miniPlayerFab = document.getElementById("sj-mini-player-fab");
+const miniTitle = document.getElementById("sj-mini-title");
+const miniArtist = document.getElementById("sj-mini-artist");
+const miniCurrentTime = document.getElementById("sj-mini-current-time");
+const miniTotalTime = document.getElementById("sj-mini-total-time");
+const miniProgressFill = document.getElementById("sj-mini-progress-fill");
+const miniToggle = document.getElementById("sj-mini-toggle");
+const miniPrev = document.getElementById("sj-mini-prev");
+const miniNext = document.getElementById("sj-mini-next");
+const playlistContainer = document.getElementById("sj-playlists");
+const newPlaylistButton = document.getElementById("sj-create-playlist");
+const playlistPrompt = document.getElementById("sj-playlist-prompt");
+const playlistNameInput = document.getElementById("sj-playlist-name-input");
+const playlistConfirmButton = document.getElementById("sj-playlist-confirm");
+const playlistCancelButton = document.getElementById("sj-playlist-cancel");
 let youtubePlayer;
 let youtubeReady;
+let musicQueue = [];
+let musicQueueIndex = -1;
+let miniPlayerTicker = null;
+const PLAYLISTS_KEY = "sleek-playlists";
+const LIKED_SONGS_KEY = "sleek-liked-songs";
+let playlists = [];
+let likedSongs = [];
 
 let controller;
 let activeTab;
@@ -207,11 +232,124 @@ function updateAccountClock() {
 		minute: "2-digit",
 		hour12: clockFormat === "12",
 	});
-	accountClock.textContent = formattedTime;
-	homeClock.textContent = formattedTime;
+	if (accountClock) accountClock.textContent = formattedTime;
+	if (homeClock) homeClock.textContent = formattedTime;
+}
+function startClockUpdates() {
+	if (window.__sleekClockInterval) return;
+	window.__sleekClockInterval = window.setInterval(() => {
+		updateAccountClock();
+	}, 1000);
 }
 function applyLanguage() {
 	document.documentElement.lang = language;
+}
+function sanitizePlaylistList(value) {
+	if (!Array.isArray(value)) return [];
+	return value.filter((playlist) => {
+		if (!playlist || typeof playlist !== "object") return false;
+		if (typeof playlist.name !== "string") return false;
+		const normalizedName = playlist.name.trim();
+		return normalizedName && !["Liked songs", "Your likes"].includes(normalizedName) && Array.isArray(playlist.tracks);
+	});
+}
+function loadPlaylists() {
+	try {
+		const raw = localStorage.getItem(PLAYLISTS_KEY);
+		const parsed = raw ? JSON.parse(raw) : [];
+		playlists = sanitizePlaylistList(parsed);
+		localStorage.setItem(PLAYLISTS_KEY, JSON.stringify(playlists));
+	} catch {
+		playlists = [];
+		localStorage.setItem(PLAYLISTS_KEY, JSON.stringify([]));
+	}
+}
+function savePlaylists() {
+	localStorage.setItem(PLAYLISTS_KEY, JSON.stringify(playlists));
+}
+function loadLikedSongs() {
+	try {
+		const raw = localStorage.getItem(LIKED_SONGS_KEY);
+		const parsed = raw ? JSON.parse(raw) : [];
+		likedSongs = Array.isArray(parsed) ? parsed : [];
+	} catch {
+		likedSongs = [];
+	}
+}
+function saveLikedSongs() {
+	localStorage.setItem(LIKED_SONGS_KEY, JSON.stringify(likedSongs));
+}
+function isTrackLiked(track) {
+	return Boolean(track && likedSongs.some((entry) => entry?.id === track.id));
+}
+function toggleLikedSong(track) {
+	if (!track) return false;
+	const index = likedSongs.findIndex((entry) => entry?.id === track.id);
+	if (index >= 0) {
+		likedSongs.splice(index, 1);
+		saveLikedSongs();
+		return false;
+	}
+	likedSongs.unshift({ id: track.id, title: track.title, channel: track.channel, thumbnail: track.thumbnail || "" });
+	saveLikedSongs();
+	return true;
+}
+function createPlaylist(name) {
+	const safeName = String(name || "").trim();
+	if (!safeName) return;
+	if (playlists.some((playlist) => playlist.name.toLowerCase() === safeName.toLowerCase())) return;
+	playlists.unshift({ name: safeName, tracks: [] });
+	savePlaylists();
+	renderPlaylists();
+}
+function addTrackToPlaylist(playlistName, track) {
+	const target = playlists.find((playlist) => playlist.name === playlistName);
+	if (!target || !track) return;
+	if (target.tracks.some((item) => item.id === track.id)) return;
+	target.tracks.push({
+		id: track.id,
+		title: track.title,
+		channel: track.channel,
+		thumbnail: track.thumbnail || "",
+	});
+	savePlaylists();
+	renderPlaylists();
+}
+function renderPlaylists() {
+	if (!playlistContainer) return;
+	playlistContainer.replaceChildren();
+	if (!playlists.length) {
+		const empty = document.createElement("div");
+		empty.className = "playlist-card";
+		empty.innerHTML = "<h4>No playlists yet</h4><small>Create one to save tracks.</small>";
+		playlistContainer.append(empty);
+		return;
+	}
+	for (const playlist of playlists) {
+		const card = document.createElement("div");
+		card.className = "playlist-card";
+		card.innerHTML = `
+			<h4>${playlist.name}</h4>
+			<small>${playlist.tracks.length} track${playlist.tracks.length === 1 ? "" : "s"}</small>
+			<div class="playlist-card-actions">
+				<button type="button" data-playlist-name="${playlist.name}">Play</button>
+				<button type="button" data-save-current="${playlist.name}">Save current</button>
+			</div>
+		`;
+		const playButton = card.querySelector("[data-playlist-name]");
+		const saveButton = card.querySelector("[data-save-current]");
+		playButton.addEventListener("click", () => {
+			if (!playlist.tracks.length) return;
+			musicQueue = playlist.tracks;
+			musicQueueIndex = 0;
+			playMusicResult(playlist.tracks[0], playlist.tracks);
+		});
+		saveButton.addEventListener("click", () => {
+			if (!musicQueue.length || musicQueueIndex < 0) return;
+			addTrackToPlaylist(playlist.name, musicQueue[musicQueueIndex]);
+		});
+		playlistContainer.append(card);
+	}
 }
 function renderAccount() {
 	accountName.value = account.name || "Guest";
@@ -353,29 +491,35 @@ savedLinks.addEventListener("click", openQuickLink);
 document.body.classList.add("is-home");
 renderQuickLinks();
 function showHome(tab) {
+	const targetTab = tab || activeTab || createTab();
 	musicPage.hidden = true;
 	document.body.classList.add("is-home");
-	tab.frameElement.src = "about:blank";
-	tab.url = "";
-	tab.button.querySelector(".sj-tab-title").textContent = "New tab";
+	document.body.classList.remove("music-open");
+	if (targetTab.frameElement) targetTab.frameElement.src = "about:blank";
+	targetTab.url = homeAddress;
+	targetTab.button.querySelector(".sj-tab-title").textContent = "New tab";
 	address.value = "";
 	tabAddress.value = homeAddress;
 	frameWrapper.style.display = "none";
 	loadingScreen.hidden = true;
+	activeTab = targetTab;
+	updateBookmarkState();
 }
 function showMusic(tab) {
-	if (!tab) return;
+	const targetTab = tab || activeTab || createTab();
 	document.body.classList.remove("is-home");
+	document.body.classList.add("music-open");
 	toolsPanel.hidden = true;
 	musicButton.setAttribute("aria-expanded", "false");
 	musicPage.hidden = false;
 	frameWrapper.style.display = "none";
 	loadingScreen.hidden = true;
-	tab.frameElement.src = "about:blank";
-	tab.url = musicAddress;
-	tab.button.querySelector(".sj-tab-title").textContent = "Music";
-	address.value = musicAddress;
+	if (targetTab.frameElement) targetTab.frameElement.src = "about:blank";
+	targetTab.url = musicAddress;
+	targetTab.button.querySelector(".sj-tab-title").textContent = "Music";
+	address.value = "";
 	tabAddress.value = musicAddress;
+	activeTab = targetTab;
 	updateBookmarkState();
 }
 function showLoading() {
@@ -397,10 +541,30 @@ async function init() {
 function attachFrame(tab) {
 	if (tab.frame) return;
 	const watcher = new $scramjetUtils.UrlWatcherPlugin((url) => {
-		tab.url = url;
-		if (tab === activeTab) address.value = url;
-		if (tab === activeTab) tabAddress.value = url;
-		if (tab === activeTab) updateBookmarkState();
+		const resolvedUrl = String(url || "");
+		const isCustomRoute = tab.url === homeAddress || tab.url === musicAddress;
+		if (!resolvedUrl || /^about:blank$/i.test(resolvedUrl)) {
+			if (isCustomRoute) {
+				if (tab === activeTab) {
+					address.value = "";
+					tabAddress.value = tab.url;
+					updateBookmarkState();
+				}
+				return;
+			}
+			tab.url = "";
+			if (tab === activeTab) {
+				address.value = "";
+				tabAddress.value = homeAddress;
+			}
+			return;
+		}
+		tab.url = resolvedUrl;
+		if (tab === activeTab) {
+			address.value = "";
+			tabAddress.value = resolvedUrl;
+			updateBookmarkState();
+		}
 	});
 	tab.frame = controller.createFrame(tab.frameElement, { plugins: [new $scramjetUtils.HttpCachePlugin(), watcher, new $scramjetUtils.CatchEscapedLinksPlugin((url) => new URL(`/?goto=${encodeURIComponent(url.href)}`, location.origin))] });
 	tab.frameElement.addEventListener("load", () => { loadingScreen.hidden = true; }, { once: false });
@@ -432,10 +596,11 @@ function selectTab(tab) {
 		item.button.classList.toggle("active", item === tab);
 		item.frameElement.classList.toggle("active", item === tab);
 	}
-	address.value = tab.url;
-	tabAddress.value = tab.url || homeAddress;
+	const route = tab?.url || homeAddress;
+	address.value = "";
+	tabAddress.value = route;
 	updateBookmarkState();
-	document.body.classList.toggle("is-home", !tab.url);
+	document.body.classList.toggle("is-home", route === homeAddress || !tab?.url);
 }
 
 function closeTab(tab) {
@@ -480,7 +645,7 @@ async function navigate(url) {
 	}
 	activeTab.url = url;
 	recordHistory(url);
-	address.value = url;
+	address.value = "";
 	tabAddress.value = url;
 	activeTab.frame.go(url);
 	activeTab.button.querySelector(".sj-tab-title").textContent = new URL(url).hostname;
@@ -563,7 +728,10 @@ animationsToggle.addEventListener("change", () => document.body.classList.toggle
 compactToggle.addEventListener("change", () => document.body.classList.toggle("compact-home", compactToggle.checked));
 const settingsNav = document.querySelector(".settings-nav");
 const settingsPages = document.querySelector(".settings-pages");
-document.querySelectorAll(".settings-info-row").forEach((row) => row.remove());
+const resetHomeButton = document.getElementById("sj-reset-home");
+if (resetHomeButton) {
+	resetHomeButton.closest(".settings-info-row")?.removeAttribute("hidden");
+}
 settingsNav.insertAdjacentHTML("afterbegin", '<button class="settings-nav-item" type="button" data-settings-page="general">General</button>');
 settingsPages.insertAdjacentHTML("afterbegin", `<section class="settings-page" data-settings-page-content="general"><p class="settings-page-label">General</p><h3>Cloaking</h3><p class="settings-about">Choose a familiar identity for this tab.</p><div class="cloak-options">${cloakOptions.map((item) => `<button class="cloak-choice" type="button" data-cloak="${item.id}"><img src="${item.favicon}" alt="" /> <span>${item.name}</span></button>`).join("")}</div><div class="panic-settings"><div class="panic-setting"><span><strong>Panic key</strong><small>Press any key to leave this page instantly.</small></span><button id="sj-panic-key" class="settings-action" type="button">Set key</button></div><label class="panic-setting panic-destination"><span><strong>Panic destination</strong><small>Where the panic key should send you.</small></span><input id="sj-panic-url" type="url" placeholder="https://www.google.com" /></label><p id="sj-panic-status" class="settings-status">No panic key set.</p></div></section>`);
 for (const button of document.querySelectorAll("[data-settings-page]")) { button.addEventListener("click", () => { const page = button.dataset.settingsPage; document.querySelectorAll("[data-settings-page]").forEach((item) => item.classList.toggle("active", item === button)); document.querySelectorAll("[data-settings-page-content]").forEach((item) => item.classList.toggle("active", item.dataset.settingsPageContent === page)); }); }
@@ -599,65 +767,446 @@ for (const button of engineButtons) {
 		engineButtons.forEach((item) => item.classList.toggle("active", item === button));
 	});
 }
-document.getElementById("sj-reset-home").addEventListener("click", () => navigate(homeAddress));
-
-document.getElementById("sj-tab-address-bar").addEventListener("submit", (event) => {
-	event.preventDefault();
-	address.value = tabAddress.value;
-	navigate(tabAddress.value).catch((navigationError) => showErrorScreen(navigationError.message, navigationError.stack));
-});
+if (resetHomeButton) {
+	resetHomeButton.addEventListener("click", () => navigate(homeAddress));
+}
+const tabAddressBar = document.getElementById("sj-tab-address-bar");
+if (tabAddressBar) {
+	tabAddressBar.addEventListener("submit", (event) => {
+		event.preventDefault();
+		address.value = tabAddress.value;
+		navigate(tabAddress.value).catch((navigationError) => showErrorScreen(navigationError.message, navigationError.stack));
+	});
+}
 
 backButton.addEventListener("click", () => activeTab?.frame.back());
 forwardButton.addEventListener("click", () => activeTab?.frame.forward());
 reloadButton.addEventListener("click", () => activeTab?.frame.reload());
-homeButton.addEventListener("click", () => navigate(homeAddress));
-musicButton.addEventListener("click", () => {
-	toolsPanel.hidden = false;
-});
+homeButton.addEventListener("click", () => openSleekPage(homeAddress));
+if (musicButton) {
+	musicButton.addEventListener("click", () => {
+		toolsPanel.hidden = !toolsPanel.hidden;
+		musicButton.setAttribute("aria-expanded", String(!toolsPanel.hidden));
+	});
+}
+function openSleekPage(route) {
+	const nextRoute = String(route || "").trim();
+	if (!nextRoute) return;
+	if (nextRoute === homeAddress) {
+		showHome(activeTab || createTab());
+		toolsPanel.hidden = true;
+		musicButton.setAttribute("aria-expanded", "false");
+		return;
+	}
+	if (nextRoute === musicAddress) {
+		showMusic(activeTab || createTab());
+		toolsPanel.hidden = true;
+		musicButton.setAttribute("aria-expanded", "false");
+		return;
+	}
+	toolsPanel.hidden = true;
+	musicButton.setAttribute("aria-expanded", "false");
+	navigate(nextRoute).catch((navigationError) => showErrorScreen(navigationError.message, navigationError.stack));
+}
 for (const page of toolsPanel.querySelectorAll("[data-panel-route]")) {
 	page.addEventListener("click", () => {
 		const route = page.dataset.panelRoute;
-		if (route === musicAddress) {
-			showMusic(activeTab || createTab());
-			return;
-		}
-		toolsPanel.hidden = true;
-		musicButton.setAttribute("aria-expanded", "false");
-		navigate(route).catch((navigationError) => showErrorScreen(navigationError.message, navigationError.stack));
+		openSleekPage(route);
 	});
 }
-musicClose.addEventListener("click", () => navigate(homeAddress));
-async function playMusicResult(result) {
+musicClose.addEventListener("click", () => openSleekPage(homeAddress));
+function formatDuration(seconds) {
+	const safeSeconds = Number.isFinite(seconds) ? Math.max(0, seconds) : 0;
+	const total = Math.floor(safeSeconds);
+	const mins = Math.floor(total / 60);
+	const secs = total % 60;
+	return `${mins}:${String(secs).padStart(2, "0")}`;
+}
+let miniPlayerCollapsed = false;
+let miniPlayerDragState = null;
+function clampMiniPlayerToViewport(element, nextLeft, nextTop) {
+	if (!element) return { left: nextLeft, top: nextTop };
+	const rect = element.getBoundingClientRect();
+	const maxLeft = Math.max(8, window.innerWidth - rect.width - 8);
+	const maxTop = Math.max(8, window.innerHeight - rect.height - 8);
+	return {
+		left: Math.min(Math.max(8, nextLeft), maxLeft),
+		top: Math.min(Math.max(8, nextTop), maxTop),
+	};
+}
+function positionMiniPlayerFabToPlayer() {
+	if (!miniPlayer || !miniPlayerFab) return;
+	const rect = miniPlayer.getBoundingClientRect();
+	miniPlayerFab.style.left = `${rect.left + rect.width - 42}px`;
+	miniPlayerFab.style.top = `${rect.top}px`;
+	miniPlayerFab.style.right = "auto";
+}
+function setMiniPlayerCollapsed(collapsed) {
+	miniPlayerCollapsed = collapsed;
+	if (!miniPlayer) return;
+	miniPlayer.classList.toggle("is-collapsed", collapsed);
+	if (collapsed) {
+		positionMiniPlayerFabToPlayer();
+		miniPlayerFab.hidden = false;
+		miniPlayer.hidden = true;
+		return;
+	}
+	if (miniPlayerFab) miniPlayerFab.hidden = true;
+	if (musicQueue.length && musicQueueIndex >= 0) {
+		miniPlayer.hidden = false;
+	}
+}
+function onMiniPlayerPointerDown(event, target) {
+	if (!target) return;
+	const element = target === miniPlayerFab ? miniPlayerFab : miniPlayer;
+	if (!element) return;
+	const rect = element.getBoundingClientRect();
+	miniPlayerDragState = {
+		pointerId: event.pointerId,
+		element,
+		offsetX: event.clientX - rect.left,
+		offsetY: event.clientY - rect.top,
+	};
+	element.setPointerCapture?.(event.pointerId);
+}
+function attachMiniPlayerDrag(handle, target) {
+	if (!handle || !target) return;
+	let dragMoved = false;
+	handle.addEventListener("pointerdown", (event) => {
+		event.preventDefault();
+		dragMoved = false;
+		const clickedButton = event.target.closest("button");
+		if (clickedButton && handle !== target) return;
+		onMiniPlayerPointerDown(event, target);
+	});
+	window.addEventListener("pointermove", (event) => {
+		if (!miniPlayerDragState || miniPlayerDragState.pointerId !== event.pointerId) return;
+		dragMoved = true;
+		const { element, offsetX, offsetY } = miniPlayerDragState;
+		const nextLeft = event.clientX - offsetX;
+		const nextTop = event.clientY - offsetY;
+		const clamped = clampMiniPlayerToViewport(element, nextLeft, nextTop);
+		element.style.left = `${clamped.left}px`;
+		element.style.top = `${clamped.top}px`;
+		element.style.right = "auto";
+	});
+	window.addEventListener("pointerup", () => {
+		miniPlayerDragState = null;
+		if (handle === miniPlayerFab) {
+			handle.dataset.dragged = dragMoved ? "true" : "false";
+		}
+	});
+}
+function updateMiniPlayerUI() {
+	if (!miniPlayer) return;
+	if (!musicQueue.length || musicQueueIndex < 0) {
+		miniPlayer.hidden = true;
+		if (miniPlayerFab) miniPlayerFab.hidden = true;
+		return;
+	}
+	const active = musicQueue[musicQueueIndex];
+	if (!active) {
+		miniPlayer.hidden = true;
+		if (miniPlayerFab) miniPlayerFab.hidden = true;
+		return;
+	}
+	if (miniPlayerCollapsed) {
+		miniPlayer.hidden = true;
+		if (miniPlayerFab) miniPlayerFab.hidden = false;
+		return;
+	}
+	miniPlayer.hidden = false;
+	if (miniPlayerFab) miniPlayerFab.hidden = true;
+	miniTitle.textContent = active.title || "Untitled";
+	miniArtist.textContent = active.channel || "YouTube";
+	nowPlaying.textContent = active.title || "Untitled";
+	playerChannel.textContent = `${active.channel || "YouTube"} / YouTube full track`;
+	miniCurrentTime.textContent = formatDuration(youtubePlayer && typeof youtubePlayer.getCurrentTime === "function" ? youtubePlayer.getCurrentTime() : 0);
+	const duration = youtubePlayer && typeof youtubePlayer.getDuration === "function" ? youtubePlayer.getDuration() : 0;
+	miniTotalTime.textContent = formatDuration(duration);
+	const pct = Number.isFinite(duration) && duration > 0 ? (Math.min((youtubePlayer && typeof youtubePlayer.getCurrentTime === "function" ? youtubePlayer.getCurrentTime() : 0) / duration, 1) * 100) : 0;
+	miniProgressFill.style.width = `${pct}%`;
+	if (youtubePlayer && typeof youtubePlayer.getPlayerState === "function") {
+		const state = youtubePlayer.getPlayerState();
+		const isPlaying = state === window.YT?.PlayerState?.PLAYING;
+		miniToggle.textContent = isPlaying ? "⏸" : "▶";
+		miniToggle.setAttribute("aria-label", isPlaying ? "Pause track" : "Play track");
+	} else {
+		miniToggle.textContent = "⏸";
+	}
+}
+function startMiniPlayerTicker() {
+	if (miniPlayerTicker) return;
+	miniPlayerTicker = window.setInterval(() => {
+		updateMiniPlayerUI();
+	}, 1000);
+}
+function stopMiniPlayerTicker() {
+	if (miniPlayerTicker) {
+		window.clearInterval(miniPlayerTicker);
+		miniPlayerTicker = null;
+	}
+}
+function showMiniPlayer(isVisible) {
+	if (!miniPlayer) return;
+	if (!isVisible) {
+		setMiniPlayerCollapsed(false);
+		miniPlayer.hidden = true;
+		if (miniPlayerFab) miniPlayerFab.hidden = true;
+		stopMiniPlayerTicker();
+		return;
+	}
+	if (miniPlayerCollapsed) {
+		miniPlayer.hidden = true;
+		positionMiniPlayerFabToPlayer();
+		if (miniPlayerFab) miniPlayerFab.hidden = false;
+		return;
+	}
+	miniPlayer.hidden = false;
+	if (miniPlayerFab) miniPlayerFab.hidden = true;
+	startMiniPlayerTicker();
+}
+function playQueueRelative(offset) {
+	if (!musicQueue.length) return;
+	if (musicQueueIndex < 0) musicQueueIndex = 0;
+	const nextIndex = (musicQueueIndex + offset + musicQueue.length) % musicQueue.length;
+	playMusicResult(musicQueue[nextIndex], musicQueue);
+}
+async function playMusicResult(result, queue = []) {
+	if (result) {
+		const requestedQueue = Array.isArray(queue) && queue.length ? queue : [result];
+		musicQueue = requestedQueue;
+		musicQueueIndex = requestedQueue.findIndex((entry) => entry?.id === result.id);
+		if (musicQueueIndex < 0) musicQueueIndex = 0;
+		if (typeof window.rememberRecentTrack === "function") {
+			try {
+				window.rememberRecentTrack(result);
+			} catch {}
+		}
+	}
 	nowPlaying.textContent = result.title;
 	playerChannel.textContent = `${result.channel} / YouTube full track`;
+	miniTitle.textContent = result.title;
+	miniArtist.textContent = result.channel || "YouTube";
+	showMiniPlayer(true);
 	const player = await loadYouTubePlayer();
-	player.loadVideoById(result.id);
+	if (player && typeof player.stopVideo === "function" && typeof player.getPlayerState === "function") {
+		try {
+			const state = player.getPlayerState();
+			if (state !== window.YT?.PlayerState?.UNSTARTED && state !== window.YT?.PlayerState?.ENDED) {
+				player.stopVideo();
+			}
+		} catch {}
+	}
+	if (player && typeof player.loadVideoById === "function") {
+		player.loadVideoById(result.id);
+		updateMiniPlayerUI();
+		return;
+	}
+	if (youtubePlayerElement) {
+		youtubePlayerElement.src = `https://www.youtube.com/embed/${encodeURIComponent(result.id)}?autoplay=1&playsinline=1&controls=1`;
+	}
+	updateMiniPlayerUI();
 }
 function loadYouTubePlayer() {
+	window.loadYouTubePlayer = loadYouTubePlayer;
 	if (youtubeReady) return youtubeReady;
 	youtubeReady = new Promise((resolve) => {
-		const create = () => { youtubePlayer = new YT.Player(youtubePlayerElement, { width: "1", height: "1", playerVars: { autoplay: 0, controls: 0, playsinline: 1 }, events: { onReady: () => resolve(youtubePlayer) } }); };
+		const create = () => {
+			try {
+				youtubePlayer = new YT.Player(youtubePlayerElement, {
+					width: "1",
+					height: "1",
+					playerVars: { autoplay: 0, controls: 0, playsinline: 1 },
+					events: { onReady: () => { window.youtubePlayer = youtubePlayer; resolve(youtubePlayer); } },
+				});
+				window.youtubePlayer = youtubePlayer;
+			} catch {
+				resolve(null);
+			}
+		};
 		if (window.YT?.Player) return create();
 		window.onYouTubeIframeAPIReady = create;
-		const script = document.createElement("script"); script.id = "yt-iframe-api"; script.src = "https://www.youtube.com/iframe_api"; document.head.append(script);
+		const script = document.createElement("script");
+		script.id = "yt-iframe-api";
+		script.src = "https://www.youtube.com/iframe_api";
+		script.async = true;
+		document.head.append(script);
+		window.setTimeout(() => {
+			if (!youtubePlayer && !window.YT?.Player) resolve(null);
+		}, 5000);
 	});
 	return youtubeReady;
+}
+function openTrackPlaylistMenu(track, trigger) {
+	const existingMenu = document.querySelector(".music-result-menu.active");
+	if (existingMenu) existingMenu.remove();
+	if (!playlists.length) {
+		musicStatus.textContent = "Create a playlist first to save tracks.";
+		openPlaylistPrompt();
+		return;
+	}
+	const menu = document.createElement("div");
+	menu.className = "music-result-menu active";
+	menu.setAttribute("role", "menu");
+	menu.innerHTML = `
+		<p class="music-result-menu-title">Add to playlist</p>
+		${playlists.map((playlist) => `<button type="button" class="music-result-menu-item" data-playlist-name="${playlist.name}">${playlist.name}</button>`).join("")}
+		<button type="button" class="music-result-menu-item" data-create-from-menu="true">Create playlist</button>
+	`;
+	menu.querySelectorAll(".music-result-menu-item").forEach((button) => {
+		button.addEventListener("click", () => {
+			if (button.dataset.createFromMenu === "true") {
+				menu.remove();
+				openPlaylistPrompt();
+				return;
+			}
+			addTrackToPlaylist(button.dataset.playlistName, track);
+			musicStatus.textContent = `Added to “${button.dataset.playlistName}”`;
+			menu.remove();
+		});
+	});
+	const rect = trigger.getBoundingClientRect();
+	menu.style.top = `${Math.min(rect.top + 8, window.innerHeight - 160)}px`;
+	menu.style.left = `${Math.max(16, rect.left - 140)}px`;
+	document.body.append(menu);
+	const removeOnOutsideClick = (event) => {
+		if (!menu.contains(event.target) && event.target !== trigger) {
+			menu.remove();
+			document.removeEventListener("click", removeOnOutsideClick);
+		}
+	};
+	document.addEventListener("click", removeOnOutsideClick);
 }
 function renderMusicResults(results) {
 	musicResults.replaceChildren();
 	for (const result of results) {
+		const card = document.createElement("div");
+		card.className = "music-result-card";
 		const button = document.createElement("button"); button.type = "button"; button.className = "music-result";
 		button.innerHTML = `<img src="${result.thumbnail}" alt=""><span><strong></strong><small></small></span><i>&#9654;</i>`;
 		button.querySelector("strong").textContent = result.title; button.querySelector("small").textContent = `${result.channel} / YouTube`;
-		button.addEventListener("click", () => playMusicResult(result)); musicResults.append(button);
+		button.addEventListener("click", () => playMusicResult(result, results));
+		const moreButton = document.createElement("button");
+		moreButton.type = "button";
+		moreButton.className = "music-result-more";
+		moreButton.setAttribute("aria-label", `Add ${result.title} to a playlist`);
+		moreButton.title = `Add ${result.title} to a playlist`;
+		moreButton.textContent = "+";
+		moreButton.addEventListener("click", (event) => {
+			event.stopPropagation();
+			if (!playlists.length) {
+				musicStatus.textContent = "Create a playlist first to save tracks.";
+				openPlaylistPrompt();
+				return;
+			}
+			openTrackPlaylistMenu(result, moreButton);
+		});
+		const likeButton = document.createElement("button");
+		likeButton.type = "button";
+		likeButton.className = `music-result-like${isTrackLiked(result) ? " active" : ""}`;
+		likeButton.textContent = isTrackLiked(result) ? "♥" : "♡";
+		likeButton.title = isTrackLiked(result) ? `Unlike ${result.title}` : `Like ${result.title}`;
+		likeButton.setAttribute("aria-label", isTrackLiked(result) ? `Unlike ${result.title}` : `Like ${result.title}`);
+		likeButton.addEventListener("click", (event) => {
+			event.stopPropagation();
+			const liked = toggleLikedSong(result);
+			likeButton.classList.toggle("active", liked);
+			likeButton.textContent = liked ? "♥" : "♡";
+			likeButton.setAttribute("aria-label", liked ? `Unlike ${result.title}` : `Like ${result.title}`);
+			musicStatus.textContent = liked ? `Added “${result.title}” to liked songs.` : `Removed “${result.title}” from liked songs.`;
+		});
+		card.append(button, moreButton, likeButton);
+		musicResults.append(card);
 	}
 }
+function openPlaylistPrompt() {
+	if (!playlistPrompt || !playlistNameInput || !playlistConfirmButton || !playlistCancelButton) return;
+	playlistPrompt.hidden = false;
+	playlistNameInput.value = `My Playlist ${playlists.length + 1}`;
+	playlistNameInput.focus();
+	playlistNameInput.select();
+}
+
+function closePlaylistPrompt() {
+	if (!playlistPrompt) return;
+	playlistPrompt.hidden = true;
+	if (playlistNameInput) playlistNameInput.value = "";
+}
+
+if (newPlaylistButton) {
+	newPlaylistButton.addEventListener("click", openPlaylistPrompt);
+}
+if (playlistConfirmButton) {
+	playlistConfirmButton.addEventListener("click", () => {
+		const name = playlistNameInput?.value ?? "";
+		closePlaylistPrompt();
+		createPlaylist(name);
+	});
+}
+if (playlistCancelButton) {
+	playlistCancelButton.addEventListener("click", closePlaylistPrompt);
+}
+if (playlistPrompt) {
+	playlistPrompt.addEventListener("click", (event) => {
+		if (event.target === playlistPrompt) closePlaylistPrompt();
+	});
+}
+if (playlistNameInput) {
+	playlistNameInput.addEventListener("keydown", (event) => {
+		if (event.key === "Enter") {
+			event.preventDefault();
+			playlistConfirmButton?.click();
+		}
+		if (event.key === "Escape") {
+			event.preventDefault();
+			closePlaylistPrompt();
+		}
+	});
+}
+
 async function searchMusic() {
 	if (activeTab) showMusic(activeTab);
 	const query = musicQuery.value.trim(); if (!query) return;
 	musicStatus.textContent = "Searching music..."; musicResults.replaceChildren();
-	try { const response = await fetch(`/api/music/search?q=${encodeURIComponent(query)}`); const payload = await response.json(); if (!response.ok) throw new Error(payload.error || "Search failed."); renderMusicResults(payload); musicStatus.textContent = payload.length ? `${payload.length} tracks found` : "No tracks found. Try another search."; } catch (error) { musicStatus.textContent = error instanceof Error ? error.message : "Search failed."; }
+	try {
+		const response = await fetch(`/api/music/search?q=${encodeURIComponent(query)}`);
+		const payload = await response.json();
+		if (!response.ok) throw new Error(payload.error || "Search failed.");
+		musicQueue = payload || [];
+		if (musicQueue.length) musicQueueIndex = 0;
+		renderMusicResults(payload);
+		musicStatus.textContent = payload.length ? `${payload.length} tracks found` : "No tracks found. Try another search.";
+	} catch (error) { musicStatus.textContent = error instanceof Error ? error.message : "Search failed."; }
 }
+miniToggle.addEventListener("click", () => {
+	if (!youtubePlayer || typeof youtubePlayer.getPlayerState !== "function") return;
+	const state = youtubePlayer.getPlayerState();
+	if (state === window.YT?.PlayerState?.PLAYING) youtubePlayer.pauseVideo();
+	else if (state === window.YT?.PlayerState?.PAUSED || state === window.YT?.PlayerState?.ENDED) youtubePlayer.playVideo();
+});
+if (miniClose) {
+	miniClose.addEventListener("click", () => {
+		setMiniPlayerCollapsed(true);
+	});
+}
+if (miniPlayerFab) {
+	miniPlayerFab.addEventListener("click", () => {
+		if (miniPlayerFab.dataset.dragged === "true") {
+			miniPlayerFab.dataset.dragged = "false";
+			return;
+		}
+		setMiniPlayerCollapsed(false);
+		if (musicQueue.length && musicQueueIndex >= 0) {
+			miniPlayer.hidden = false;
+			startMiniPlayerTicker();
+		}
+	});
+	attachMiniPlayerDrag(miniPlayerFab, miniPlayerFab);
+}
+if (miniPlayerHandle) attachMiniPlayerDrag(miniPlayerHandle, miniPlayer);
+miniPrev.addEventListener("click", () => playQueueRelative(-1));
+miniNext.addEventListener("click", () => playQueueRelative(1));
 musicSubmit.addEventListener("click", searchMusic);
 musicQuery.addEventListener("keydown", (event) => {
 	if (event.key === "Enter") {
@@ -666,8 +1215,10 @@ musicQuery.addEventListener("keydown", (event) => {
 	}
 });
 applyLanguage();
+loadPlaylists();
 renderAccount();
-	setInterval(updateAccountClock, 1000);
+renderPlaylists();
+startClockUpdates();
 
 init().catch((startupError) => showErrorScreen(startupError.message, startupError.stack));
 

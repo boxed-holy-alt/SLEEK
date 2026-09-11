@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>SLEEK</title>
+		<title>𝙎𝙇𝙀𝙀𝙆 𝘽𝙊𝙊𝙆𝙎</title>
 		<link rel="icon" type="image/png" href="/sleek-logo.png" />
 		<link rel="stylesheet" href="/index.css" />
 
@@ -65,16 +65,51 @@
 				<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0"/><path fill-rule="evenodd" d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8m8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1"/></svg>
 			</button>
 		</form>
+		<div id="sj-mini-player" class="mini-player" hidden>
+			<div id="sj-mini-player-handle" class="mini-player-handle" aria-label="Drag music player" title="Drag player">
+				<span aria-hidden="true" class="mini-player-drag">⋮⋮</span>
+				<button id="sj-mini-close" type="button" aria-label="Close music player">×</button>
+			</div>
+			<div class="mini-player-art" aria-hidden="true">♪</div>
+			<div class="mini-player-main">
+				<div class="mini-player-meta">
+					<span class="mini-player-label">Now playing</span>
+					<strong id="sj-mini-title">Nothing playing</strong>
+					<small id="sj-mini-artist">Choose a song</small>
+				</div>
+				<div class="mini-player-controls">
+					<button id="sj-mini-prev" type="button" aria-label="Previous track">⏮</button>
+					<button id="sj-mini-toggle" type="button" aria-label="Pause track">⏸</button>
+					<button id="sj-mini-next" type="button" aria-label="Next track">⏭</button>
+				</div>
+			</div>
+			<div class="mini-player-time-wrap">
+				<span id="sj-mini-current-time">0:00</span>
+				<div class="mini-player-progress"><span id="sj-mini-progress-fill"></span></div>
+				<span id="sj-mini-total-time">0:00</span>
+			</div>
+		</div>
+		<button id="sj-mini-player-fab" class="mini-player-fab" type="button" aria-label="Open player" hidden>♬</button>
 		<div title="SLEEK Logo" class="flex-center logo-wrapper header-center">
 			<h1>SLEEK</h1>
 		</div>
 		<div id="sj-home-clock" class="home-clock" aria-label="Current local time">--:--</div>
 		<script>
-			try {
-				const clockLanguage = localStorage.getItem("sleek-language") === "es" ? "es-ES" : "en-US";
-				const clockHour12 = localStorage.getItem("sleek-clock-format") === "12";
-				document.getElementById("sj-home-clock").textContent = new Date().toLocaleTimeString(clockLanguage, { hour: "2-digit", minute: "2-digit", hour12: clockHour12 });
-			} catch {}
+			(() => {
+				try {
+					const clock = document.getElementById("sj-home-clock");
+					if (!clock) return;
+					const render = () => {
+						const clockLanguage = localStorage.getItem("sleek-language") === "es" ? "es-ES" : "en-US";
+						const clockHour12 = localStorage.getItem("sleek-clock-format") === "12";
+						clock.textContent = new Date().toLocaleTimeString(clockLanguage, { hour: "2-digit", minute: "2-digit", hour12: clockHour12 });
+					};
+					render();
+					if (!window.__sleekClockInterval) {
+						window.__sleekClockInterval = window.setInterval(render, 1000);
+					}
+				} catch {}
+			})();
 		</script>
 		<form id="sj-form" class="flex-center" autocomplete="off">
 			<input
@@ -85,11 +120,52 @@
 			<input id="sj-address" type="text" placeholder="Search the web freely" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
 		</form>
 		<section id="sj-music-page" hidden aria-labelledby="sj-music-title">
-			<div class="music-page-header"><div><p class="music-eyebrow">SLEEKIFY / YOUTUBE MUSIC</p><h2 id="sj-music-title">Find your sound.</h2><p class="music-subtitle">Search and play full tracks without leaving SLEEK.</p></div><button id="sj-music-close" type="button" aria-label="Close music">&times;</button></div>
-			<div id="sj-music-search" class="music-search" role="search"><input id="sj-music-query" type="search" placeholder="Search artists, albums, mixes..." autocomplete="off" /><button id="sj-music-submit" type="button" aria-label="Search music">&#8594;</button></div>
-			<p id="sj-music-status" class="music-status">Search an artist, song or album to start listening.</p>
-			<section id="sj-music-results" class="music-results" aria-live="polite"></section>
-			<div class="music-player"><div id="sj-youtube-player" class="youtube-player-hidden"></div><div class="player-meta"><span class="player-state">SLEEKIFY / YOUTUBE</span><strong id="sj-now-playing">Nothing playing</strong><small id="sj-player-channel">Choose a result to play the full track.</small></div></div>
+			<div class="spotify-shell">
+				<aside class="spotify-sidebar" aria-label="Music library">
+					<div class="spotify-brand" aria-label="Sleekify logo">
+						<div class="spotify-logo">S</div>
+						<span>Sleekify</span>
+					</div>
+					<nav class="spotify-sidebar-nav" aria-label="Library navigation">
+						<button class="sidebar-link active" type="button" data-nav="library">Home</button>
+						<button class="sidebar-link" type="button" data-nav="playlists">Playlists</button>
+					</nav>
+					<div class="sidebar-section">
+						<div class="sidebar-row">
+							<span>Recently listened</span>
+						</div>
+						<div class="recent-library-list" aria-live="polite"></div>
+					</div>
+				</aside>
+				<main class="spotify-main">
+					<header class="music-page-header">
+						<div>
+							<h2 id="sj-music-title">SLEEKIFY</h2>
+							<p class="music-subtitle">Listen to music in a <strong>SLEEK</strong> way</p>
+						</div>
+						<button id="sj-music-close" type="button" aria-label="Go home">⌂</button>
+					</header>
+					<div class="spotify-toolbar">
+						<div id="sj-music-search" class="music-search" role="search">
+							<input id="sj-music-query" type="search" placeholder="Search songs, artists or albums" autocomplete="off" />
+							<button id="sj-music-submit" type="button" aria-label="Search music">→</button>
+						</div>
+						<div class="spotify-actions">
+							<button class="ghost-button" type="button">Explore</button>
+						</div>
+					</div>
+					<p id="sj-music-status" class="music-status">Search for a track, artist or album to start listening.</p>
+					<section id="sj-music-results" class="music-results" aria-live="polite"></section>
+					<div class="music-player">
+						<div id="sj-youtube-player" class="youtube-player-hidden"></div>
+						<div class="player-meta">
+							<span class="player-state">Now playing</span>
+							<strong id="sj-now-playing">Nothing playing</strong>
+							<small id="sj-player-channel">Choose a result to play a track.</small>
+						</div>
+					</div>
+				</main>
+			</div>
 			<script>
 				(() => {
 					const button = document.getElementById("sj-music-submit");
@@ -99,48 +175,790 @@
 					const playerHost = document.getElementById("sj-youtube-player");
 					const title = document.getElementById("sj-now-playing");
 					const channel = document.getElementById("sj-player-channel");
+					if (!button || !input || !status || !results || !playerHost || !title || !channel) return;
 					let player;
 					let playerReady;
+					let playlists = [];
+					let likedSongs = [];
+					let recentTracks = [];
+					let playlistShuffleEnabled = false;
+					const PLAYLISTS_KEY = "sleek-playlists";
+					const LIKED_SONGS_KEY = "sleek-liked-songs";
+					const RECENT_TRACKS_KEY = "sleek-recent-tracks";
+					function sanitizePlaylists(value) {
+						if (!Array.isArray(value)) return [];
+						return value.filter((playlist) => {
+							if (!playlist || typeof playlist !== "object") return false;
+							if (typeof playlist.name !== "string") return false;
+							const normalizedName = playlist.name.trim();
+							return normalizedName && !["Liked songs", "Your likes"].includes(normalizedName) && Array.isArray(playlist.tracks);
+						});
+					}
+					function loadPlaylists() {
+						try {
+							const raw = localStorage.getItem(PLAYLISTS_KEY);
+							const parsed = raw ? JSON.parse(raw) : [];
+							playlists = sanitizePlaylists(parsed);
+							localStorage.setItem(PLAYLISTS_KEY, JSON.stringify(playlists));
+						} catch {
+							playlists = [];
+							localStorage.setItem(PLAYLISTS_KEY, JSON.stringify([]));
+						}
+					}
+					function savePlaylists() {
+						localStorage.setItem(PLAYLISTS_KEY, JSON.stringify(playlists));
+					}
+					function loadLikedSongs() {
+						try {
+							const raw = localStorage.getItem(LIKED_SONGS_KEY);
+							const parsed = raw ? JSON.parse(raw) : [];
+							likedSongs = Array.isArray(parsed) ? parsed.filter((entry) => entry && typeof entry === "object" && typeof entry.id === "string") : [];
+							localStorage.setItem(LIKED_SONGS_KEY, JSON.stringify(likedSongs));
+						} catch {
+							likedSongs = [];
+							localStorage.setItem(LIKED_SONGS_KEY, JSON.stringify([]));
+						}
+					}
+					function saveLikedSongs() {
+						localStorage.setItem(LIKED_SONGS_KEY, JSON.stringify(likedSongs));
+					}
+					function isTrackLiked(track) {
+						return Boolean(track && likedSongs.some((entry) => entry?.id === track.id));
+					}
+					function toggleLikeSong(track) {
+						if (!track) return false;
+						const index = likedSongs.findIndex((entry) => entry?.id === track.id);
+						if (index >= 0) {
+							likedSongs.splice(index, 1);
+							saveLikedSongs();
+							return false;
+						}
+						likedSongs.unshift({ id: track.id, title: track.title, channel: track.channel, thumbnail: track.thumbnail || "" });
+						saveLikedSongs();
+						return true;
+					}
+					function renderSidebarRecentTracks() {
+						const list = document.querySelector(".recent-library-list");
+						if (!list) return;
+						const recent = recentTracks.slice(0, 10);
+						list.replaceChildren();
+						if (!recent.length) {
+							const empty = document.createElement("div");
+							empty.className = "mini-library-item empty-state";
+							empty.innerHTML = `
+								<span class="mini-cover green">♫</span>
+								<div>
+									<strong>Nothing yet</strong>
+									<small>Play a song to build your recent list</small>
+								</div>
+							`;
+							list.append(empty);
+							return;
+						}
+						recent.forEach((track) => {
+							const item = document.createElement("button");
+							item.type = "button";
+							item.className = "mini-library-item mini-recent-item";
+							item.innerHTML = `
+								<span class="mini-cover tiny">♫</span>
+								<div class="mini-library-copy">
+									<strong>${track.title}</strong>
+									<small>${track.channel}</small>
+								</div>
+							`;
+							item.addEventListener("click", async () => {
+									playTrackSelection(track, recentTracks);
+								await playTrackVideo(track.id);
+								status.textContent = `Playing “${track.title}” from “${track.channel}”.`;
+							});
+							list.append(item);
+						});
+					}
+					function loadRecentTracks() {
+						try {
+							const raw = localStorage.getItem(RECENT_TRACKS_KEY);
+							const parsed = raw ? JSON.parse(raw) : [];
+							recentTracks = Array.isArray(parsed) ? parsed.filter((entry) => entry && typeof entry === "object" && typeof entry.id === "string") : [];
+							localStorage.setItem(RECENT_TRACKS_KEY, JSON.stringify(recentTracks));
+						} catch {
+							recentTracks = [];
+							localStorage.setItem(RECENT_TRACKS_KEY, JSON.stringify([]));
+						}
+					}
+					function saveRecentTracks() {
+						localStorage.setItem(RECENT_TRACKS_KEY, JSON.stringify(recentTracks));
+					}
+					function rememberRecentTrack(track) {
+						if (!track || !track.id) return;
+						const next = { id: track.id, title: track.title || "Untitled", channel: track.channel || "YouTube", thumbnail: track.thumbnail || "" };
+						const deduped = recentTracks.filter((entry) => entry?.id !== next.id);
+						deduped.unshift(next);
+						recentTracks = deduped.slice(0, 10);
+						saveRecentTracks();
+						renderSidebarRecentTracks();
+					}
+					function syncMiniPlayerWithTrack(track, queue = []) {
+						const miniPlayerElement = document.getElementById("sj-mini-player");
+						const miniTitleElement = document.getElementById("sj-mini-title");
+						const miniArtistElement = document.getElementById("sj-mini-artist");
+						const globalNowPlaying = document.getElementById("sj-now-playing");
+						const globalChannel = document.getElementById("sj-player-channel");
+						const resolvedTitle = track?.title || "Nothing playing";
+						const resolvedChannel = track?.channel || "YouTube";
+						if (miniPlayerElement) miniPlayerElement.hidden = false;
+						if (miniTitleElement) miniTitleElement.textContent = resolvedTitle;
+						if (miniArtistElement) miniArtistElement.textContent = resolvedChannel;
+						if (globalNowPlaying) globalNowPlaying.textContent = resolvedTitle;
+						if (globalChannel) globalChannel.textContent = `${resolvedChannel} / Full track`;
+						if (typeof musicQueue !== "undefined") {
+							const nextQueue = Array.isArray(queue) && queue.length ? queue : [track];
+							musicQueue = nextQueue;
+							musicQueueIndex = nextQueue.findIndex((entry) => entry?.id === track.id);
+							if (musicQueueIndex < 0) musicQueueIndex = 0;
+						}
+						if (typeof window.showMiniPlayer === "function") window.showMiniPlayer(true);
+						if (typeof window.updateMiniPlayerUI === "function") window.updateMiniPlayerUI();
+					}
+					function playTrackSelection(track, queue = []) {
+						if (!track) return;
+						title.textContent = track.title;
+						channel.textContent = `${track.channel} / Full track`;
+						rememberRecentTrack(track);
+						renderSidebarRecentTracks();
+						syncMiniPlayerWithTrack(track, queue);
+					}
+					function buildHomeRecommendations() {
+						const moodTracks = [
+							{ id: "mood-1", title: "Sunset Drive", channel: "Golden Hour", thumbnail: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=400&q=80" },
+							{ id: "mood-2", title: "Night Shift", channel: "Neon Avenue", thumbnail: "https://images.unsplash.com/photo-1516280440614-37939bbacd81?auto=format&fit=crop&w=400&q=80" },
+							{ id: "mood-3", title: "Cloud Nine", channel: "Dream State", thumbnail: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?auto=format&fit=crop&w=400&q=80" },
+							{ id: "mood-4", title: "Highway Glow", channel: "Midwest Lights", thumbnail: "https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&w=400&q=80" },
+							{ id: "mood-5", title: "After Hours", channel: "City Echo", thumbnail: "https://images.unsplash.com/photo-1511379938547-c1f69419868d?auto=format&fit=crop&w=400&q=80" },
+							{ id: "mood-6", title: "Breeze Walk", channel: "Open Air", thumbnail: "https://images.unsplash.com/photo-1500375592092-40eb2168fd21?auto=format&fit=crop&w=400&q=80" },
+						];
+						const usPopular = [
+							{ id: "us-1", title: "Electric Heart", channel: "Atlantic Wave", thumbnail: "https://images.unsplash.com/photo-1493246507139-91e8fad9978e?auto=format&fit=crop&w=400&q=80" },
+							{ id: "us-2", title: "West Coast Mood", channel: "Skyline FM", thumbnail: "https://images.unsplash.com/photo-1460661419201-fd4cecdf8a8b?auto=format&fit=crop&w=400&q=80" },
+							{ id: "us-3", title: "City Lights", channel: "Metro Echo", thumbnail: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=400&q=80" },
+							{ id: "us-4", title: "Summer Static", channel: "Coastline", thumbnail: "https://images.unsplash.com/photo-1501612780327-45045538702b?auto=format&fit=crop&w=400&q=80" },
+						];
+						const seedTracks = [...likedSongs.slice(0, 4), ...recentTracks.slice(0, 4)];
+						const unique = [];
+						for (const track of seedTracks) {
+							if (!track || !track.id || unique.some((entry) => entry.id === track.id)) continue;
+							unique.push(track);
+							if (unique.length >= 4) break;
+						}
+						const recommendationPool = seedTracks.length ? [...unique, ...moodTracks, ...usPopular] : [...moodTracks, ...usPopular];
+						const seen = new Set();
+						const recommendations = [];
+						for (const track of recommendationPool) {
+							if (!track || !track.id || seen.has(track.id)) continue;
+							seen.add(track.id);
+							recommendations.push(track);
+							if (recommendations.length >= 8) break;
+						}
+						return recommendations;
+					}
+					function renderHomeRecommendations() {
+						results.classList.remove("playlist-results");
+						results.replaceChildren();
+						const section = document.createElement("div");
+						section.className = "music-home-panel";
+						const hero = document.createElement("div");
+						hero.className = "music-home-hero";
+						hero.innerHTML = `
+							<p class="music-eyebrow">Home</p>
+							<h3>Made for you</h3>
+							<p>${likedSongs.length || recentTracks.length ? "Based on the songs you’ve liked and played." : "Popular tracks to get you started."}</p>
+						`;
+						section.append(hero);
+						const recommendations = buildHomeRecommendations();
+						const grid = document.createElement("div");
+						grid.className = "music-results";
+						for (const item of recommendations) {
+							const card = document.createElement("div");
+							card.className = "music-result-card";
+							const row = document.createElement("button");
+							row.type = "button";
+							row.className = "music-result";
+							row.innerHTML = `<img src="${item.thumbnail || ""}" alt=""><span><strong>${item.title}</strong><small>${item.channel}</small></span><i>▶</i>`;
+							row.addEventListener("click", async () => {
+									playTrackSelection(item, recommendations);
+								await playTrackVideo(item.id);
+								status.textContent = `Playing “${item.title}” from “${item.channel}”.`;
+							});
+							const like = document.createElement("button");
+							like.type = "button";
+							like.className = `music-result-like${isTrackLiked(item) ? " active" : ""}`;
+							like.textContent = isTrackLiked(item) ? "♥" : "♡";
+							like.addEventListener("click", (event) => {
+								event.stopPropagation();
+								const liked = toggleLikeSong(item);
+								like.classList.toggle("active", liked);
+								like.textContent = liked ? "♥" : "♡";
+								status.textContent = liked ? `Added “${item.title}” to liked songs.` : `Removed “${item.title}” from liked songs.`;
+									try {
+										renderSidebarLikedState();
+									} catch {}
+							});
+							card.append(row, like);
+							grid.append(card);
+						}
+						section.append(grid);
+						results.append(section);
+						status.textContent = likedSongs.length || recentTracks.length ? "Based on your recent listening." : "Popular picks for you.";
+					}
 					function getPlayer() {
+						if (typeof window.loadYouTubePlayer === "function") {
+							return window.loadYouTubePlayer();
+						}
+						if (window.youtubePlayer && typeof window.youtubePlayer.loadVideoById === "function") {
+							return Promise.resolve(window.youtubePlayer);
+						}
 						if (playerReady) return playerReady;
 						playerReady = new Promise((resolve) => {
-							const create = () => { player = new YT.Player(playerHost, { width: "1", height: "1", playerVars: { autoplay: 0, controls: 0, playsinline: 1 }, events: { onReady: () => resolve(player) } }); };
+							const create = () => {
+								player = new YT.Player(playerHost, {
+									width: "1",
+									height: "1",
+									playerVars: { autoplay: 0, controls: 0, playsinline: 1 },
+									events: { onReady: () => resolve(player) },
+								});
+							};
 							if (window.YT?.Player) return create();
 							window.onYouTubeIframeAPIReady = create;
-							const script = document.createElement("script"); script.id = "yt-iframe-api"; script.src = "https://www.youtube.com/iframe_api"; document.head.append(script);
+							const script = document.createElement("script");
+							script.id = "yt-iframe-api";
+							script.src = "https://www.youtube.com/iframe_api";
+							document.head.append(script);
 						});
 						return playerReady;
 					}
+					async function playTrackVideo(trackId) {
+						if (!trackId) return;
+						const youtube = await getPlayer();
+						if (!youtube || typeof youtube.loadVideoById !== "function") return;
+						try {
+							if (typeof youtube.getPlayerState === "function") {
+								const state = youtube.getPlayerState();
+								if (state !== window.YT?.PlayerState?.UNSTARTED && state !== window.YT?.PlayerState?.ENDED) {
+									youtube.stopVideo();
+								}
+							}
+						} catch {}
+						youtube.loadVideoById(trackId);
+					}
+					function addTrackToPlaylist(name, track) {
+						const playlistName = String(name || "").trim();
+						if (!playlistName || !track) return false;
+						loadPlaylists();
+						const playlist = playlists.find((item) => item.name.trim().toLowerCase() === playlistName.toLowerCase());
+						if (!playlist) return false;
+						if (playlist.tracks.some((item) => item.id === track.id)) return true;
+						playlist.tracks.push({
+							id: track.id,
+							title: track.title,
+							channel: track.channel,
+							thumbnail: track.thumbnail || "",
+						});
+						savePlaylists();
+						if (typeof renderPlaylistList === "function") renderPlaylistList();
+						return true;
+					}
+					function createPlaylist(name, track) {
+						const safeName = String(name || "").trim();
+						if (!safeName) return false;
+						if (playlists.some((item) => item.name.toLowerCase() === safeName.toLowerCase())) {
+							if (track) addTrackToPlaylist(safeName, track);
+							return true;
+						}
+						playlists.unshift({ name: safeName, tracks: track ? [track] : [] });
+						savePlaylists();
+						return true;
+					}
+					function renamePlaylist(playlist, nextName) {
+						const safeName = String(nextName || "").trim();
+						if (!safeName) return false;
+						if (playlists.some((item) => item !== playlist && item.name.toLowerCase() === safeName.toLowerCase())) {
+							status.textContent = `A playlist named “${safeName}” already exists.`;
+							return false;
+						}
+						playlist.name = safeName;
+						savePlaylists();
+						return true;
+					}
+					let activePlaylistDialogHandler = null;
+					function getPlaylistDialogEls() {
+						return {
+							dialog: document.getElementById("sj-playlist-dialog"),
+							title: document.getElementById("sj-playlist-dialog-title"),
+							input: document.getElementById("sj-playlist-dialog-input"),
+							confirm: document.querySelector(".playlist-dialog-confirm"),
+							cancel: document.querySelector(".playlist-dialog-cancel"),
+							close: document.querySelector(".playlist-dialog-close")
+						};
+					}
+					function closePlaylistDialog() {
+						const { dialog } = getPlaylistDialogEls();
+						if (!dialog) return;
+						dialog.hidden = true;
+						activePlaylistDialogHandler = null;
+					}
+					function openPlaylistDialog({ title, value, confirmText, onConfirm }) {
+						bindPlaylistDialogEvents();
+						const { dialog, input, title: titleEl, confirm } = getPlaylistDialogEls();
+						if (!dialog || !input || !titleEl || !confirm) return;
+						titleEl.textContent = title;
+						input.value = value || "";
+						confirm.textContent = confirmText || "Create";
+						activePlaylistDialogHandler = onConfirm || null;
+						dialog.hidden = false;
+						requestAnimationFrame(() => {
+							input.focus();
+							input.select();
+						});
+					}
+					function bindPlaylistDialogEvents() {
+						const { dialog, confirm, cancel, close } = getPlaylistDialogEls();
+						if (!dialog) return;
+						if (confirm && !confirm.dataset.playlistDialogBound) {
+							confirm.dataset.playlistDialogBound = "true";
+							confirm.onclick = () => {
+								const { input } = getPlaylistDialogEls();
+								const value = String(input?.value || "").trim();
+								if (!value) {
+									input?.focus();
+									return;
+								}
+								const handler = activePlaylistDialogHandler;
+								closePlaylistDialog();
+								if (typeof handler === "function") handler(value);
+							};
+						}
+						if (cancel && !cancel.dataset.playlistDialogBound) {
+							cancel.dataset.playlistDialogBound = "true";
+							cancel.onclick = closePlaylistDialog;
+						}
+						if (close && !close.dataset.playlistDialogBound) {
+							close.dataset.playlistDialogBound = "true";
+							close.onclick = closePlaylistDialog;
+						}
+						if (!dialog.dataset.playlistDialogBound) {
+							dialog.dataset.playlistDialogBound = "true";
+							dialog.onclick = (event) => {
+								if (event.target === dialog) closePlaylistDialog();
+							};
+						}
+					}
+					if (document.readyState === "loading") {
+						document.addEventListener("DOMContentLoaded", bindPlaylistDialogEvents, { once: true });
+					} else {
+						bindPlaylistDialogEvents();
+					}
+					window.addEventListener("keydown", (event) => {
+						const { dialog } = getPlaylistDialogEls();
+						if (event.key === "Escape" && dialog && !dialog.hidden) closePlaylistDialog();
+					});
+					let activePlaylist = null;
+					function renderPlaylistDetail(playlist) {
+						activePlaylist = playlist;
+						results.classList.remove("playlist-results");
+						results.replaceChildren();
+						const wrapper = document.createElement("div");
+						wrapper.className = "playlist-detail";
+						const header = document.createElement("div");
+						header.className = "playlist-detail-header";
+						const back = document.createElement("button");
+						back.type = "button";
+						back.className = "playlist-back-button";
+						back.title = "Back to playlists";
+						back.innerHTML = '<span aria-hidden="true">🠰</span>';
+						back.addEventListener("click", (event) => {
+							event.preventDefault();
+							event.stopPropagation();
+							renderPlaylistList();
+						});
+						const meta = document.createElement("div");
+						meta.className = "playlist-detail-meta";
+						meta.innerHTML = `<span class="playlist-detail-title">${playlist.name}</span><span class="playlist-detail-count">| ${playlist.tracks.length} track${playlist.tracks.length === 1 ? "" : "s"}</span>`;
+						const leftMeta = document.createElement("div");
+						leftMeta.className = "playlist-detail-left";
+						leftMeta.append(meta, back);
+						const controls = document.createElement("div");
+						controls.className = "playlist-detail-controls";
+						const mainPlay = document.createElement("button");
+						mainPlay.type = "button";
+						mainPlay.className = "playlist-icon-button playlist-play-icon";
+						mainPlay.title = "Play playlist";
+						mainPlay.innerHTML = `
+							<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-play-circle" viewBox="0 0 16 16" aria-hidden="true">
+								<path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+								<path d="M6.271 5.055a.5.5 0 0 1 .52.038l3.5 2.5a.5.5 0 0 1 0 .814l-3.5 2.5A.5.5 0 0 1 6 10.5v-5a.5.5 0 0 1 .271-.445"/>
+							</svg>
+						`;
+						mainPlay.addEventListener("click", async (event) => {
+							event.preventDefault();
+							event.stopPropagation();
+							if (!playlist.tracks.length) {
+								status.textContent = `“${playlist.name}” is empty.`;
+								return;
+							}
+							const nextTrack = playlistShuffleEnabled && playlist.tracks.length > 1
+								? playlist.tracks[Math.floor(Math.random() * playlist.tracks.length)]
+								: playlist.tracks[0];
+							title.textContent = nextTrack.title;
+							channel.textContent = `${nextTrack.channel} / Full track`;
+								await playTrackVideo(nextTrack.id);
+							status.textContent = `Playing “${nextTrack.title}” from “${playlist.name}”.`;
+						});
+						const rename = document.createElement("button");
+						rename.type = "button";
+						rename.className = "playlist-rename-button";
+						rename.title = "Rename playlist";
+						rename.textContent = "Rename";
+						rename.addEventListener("click", (event) => {
+							event.preventDefault();
+							event.stopPropagation();
+							openPlaylistDialog({
+								title: "Rename playlist",
+								value: playlist.name,
+								confirmText: "Rename",
+								onConfirm: (nextName) => {
+									if (renamePlaylist(playlist, nextName)) {
+										status.textContent = `Renamed playlist to “${playlist.name}”.`;
+										renderPlaylistDetail(playlist);
+									}
+								}
+							});
+						});
+						const shuffle = document.createElement("button");
+						shuffle.type = "button";
+						shuffle.className = `playlist-icon-button${playlistShuffleEnabled ? " active" : ""}`;
+						shuffle.title = playlistShuffleEnabled ? "Shuffle mode on" : "Shuffle mode off";
+						shuffle.setAttribute("aria-pressed", String(playlistShuffleEnabled));
+						shuffle.innerHTML = `
+							<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-shuffle" viewBox="0 0 16 16" aria-hidden="true">
+								<path fill-rule="evenodd" d="M0 3.5A.5.5 0 0 1 .5 3H1c2.202 0 3.827 1.24 4.874 2.418.49.552.865 1.102 1.126 1.532.26-.43.636-.98 1.126-1.532C9.173 4.24 10.798 3 13 3v1c-1.798 0-3.173 1.01-4.126 2.082A9.6 9.6 0 0 0 7.556 8a9.6 9.6 0 0 0 1.317 1.918C9.828 10.99 11.204 12 13 12v1c-2.202 0-3.827-1.24-4.874-2.418A10.6 10.6 0 0 1 7 9.05c-.26.43-.636.98-1.126 1.532C4.827 11.76 3.202 13 1 13H.5a.5.5 0 0 1 0-1H1c1.798 0 3.173-1.01 4.126-2.082A9.6 9.6 0 0 0 6.444 8a9.6 9.6 0 0 0-1.317-1.918C4.172 5.01 2.796 4 1 4H.5a.5.5 0 0 1-.5-.5"/>
+								<path d="M13 5.466V1.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384l-2.36 1.966a.25.25 0 0 1-.41-.192m0 9v-3.932a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384l-2.36 1.966a.25.25 0 0 1-.41-.192"/>
+							</svg>
+						`;
+						shuffle.addEventListener("click", (event) => {
+							event.preventDefault();
+							event.stopPropagation();
+							playlistShuffleEnabled = !playlistShuffleEnabled;
+							shuffle.classList.toggle("active", playlistShuffleEnabled);
+							shuffle.title = playlistShuffleEnabled ? "Shuffle mode on" : "Shuffle mode off";
+							shuffle.setAttribute("aria-pressed", String(playlistShuffleEnabled));
+							status.textContent = playlistShuffleEnabled ? `Shuffle is on for “${playlist.name}”.` : `Shuffle is off for “${playlist.name}”.`;
+						});
+						controls.append(mainPlay, shuffle, rename);
+						header.append(leftMeta, controls);
+						wrapper.append(header);
+						const trackList = document.createElement("div");
+						trackList.className = "playlist-track-list";
+						if (!playlist.tracks.length) {
+							const empty = document.createElement("div");
+							empty.className = "playlist-empty";
+							empty.innerHTML = "<strong>No songs in this playlist yet</strong><small>Add tracks from search results.</small>";
+							trackList.append(empty);
+						} else {
+							playlist.tracks.forEach((track) => {
+								const item = document.createElement("button");
+								item.type = "button";
+								item.className = "playlist-track-item";
+								item.innerHTML = `<img src="${track.thumbnail || ""}" alt="" /><span><strong>${track.title}</strong><small>${track.channel}</small></span><em>▶</em>`;
+								item.addEventListener("click", async (event) => {
+									event.preventDefault();
+									event.stopPropagation();
+										playTrackSelection(track, playlist.tracks);
+									await playTrackVideo(track.id);
+									status.textContent = `Playing “${track.title}” from “${playlist.name}”.`;
+								});
+								trackList.append(item);
+							});
+						}
+						wrapper.append(trackList);
+						results.append(wrapper);
+					}
+					function renderPlaylistList() {
+						activePlaylist = null;
+						results.classList.add("playlist-results");
+						results.replaceChildren();
+						const listHeader = document.createElement("div");
+						listHeader.className = "playlist-list-header";
+						const addButton = document.createElement("button");
+						addButton.type = "button";
+						addButton.className = "playlist-add-button";
+						addButton.title = "Create playlist";
+						addButton.textContent = "+";
+						addButton.addEventListener("click", (event) => {
+							event.preventDefault();
+							event.stopPropagation();
+							openPlaylistDialog({
+								title: "Create playlist",
+								value: `My Playlist ${playlists.length + 1}`,
+								confirmText: "Create",
+								onConfirm: (name) => {
+									createPlaylist(name);
+									renderPlaylistList();
+									status.textContent = `Created playlist “${name}”.`;
+								}
+							});
+						});
+						listHeader.append(addButton);
+						results.append(listHeader);
+						if (!playlists.length) {
+							const empty = document.createElement("div");
+							empty.className = "playlist-empty";
+							empty.innerHTML = "<strong>No playlists yet</strong><small>Create one to save your favorite songs.</small>";
+							const create = document.createElement("button");
+							create.type = "button";
+							create.className = "ghost-button";
+							create.textContent = "Create playlist";
+							create.addEventListener("click", (event) => {
+								event.preventDefault();
+								event.stopPropagation();
+								openPlaylistDialog({
+									title: "Create playlist",
+									value: `My Playlist ${playlists.length + 1}`,
+									confirmText: "Create",
+									onConfirm: (name) => {
+										createPlaylist(name);
+										renderPlaylistList();
+										status.textContent = `Created playlist “${name}”.`;
+									}
+								});
+							});
+							empty.append(create);
+							results.append(empty);
+							status.textContent = "No playlists yet.";
+							return;
+						}
+						playlists.forEach((playlist) => {
+							const panel = document.createElement("div");
+							panel.className = "playlist-panel";
+							panel.tabIndex = 0;
+							panel.setAttribute("role", "button");
+							panel.setAttribute("aria-label", `Open playlist ${playlist.name}`);
+							const openPlaylist = (event) => {
+								event.preventDefault();
+								event.stopPropagation();
+								renderPlaylistDetail(playlist);
+							};
+							panel.addEventListener("click", openPlaylist);
+							panel.addEventListener("keydown", (event) => {
+								if (event.key === "Enter" || event.key === " ") {
+									event.preventDefault();
+									event.stopPropagation();
+									renderPlaylistDetail(playlist);
+								}
+							});
+							const header = document.createElement("div");
+							header.className = "playlist-header";
+							const label = document.createElement("div");
+							label.className = "playlist-label";
+							label.innerHTML = `<strong>${playlist.name}</strong><small>${playlist.tracks.length} track${playlist.tracks.length === 1 ? "" : "s"}</small>`;
+							const actions = document.createElement("div");
+							actions.className = "playlist-panel-actions";
+							const rename = document.createElement("button");
+							rename.type = "button";
+							rename.className = "playlist-panel-action";
+							rename.textContent = "Rename";
+							rename.title = `Rename ${playlist.name}`;
+							rename.addEventListener("click", (event) => {
+								event.preventDefault();
+								event.stopPropagation();
+								openPlaylistDialog({
+									title: "Rename playlist",
+									value: playlist.name,
+									confirmText: "Rename",
+									onConfirm: (nextName) => {
+										if (renamePlaylist(playlist, nextName)) {
+											status.textContent = `Renamed playlist to “${playlist.name}”.`;
+											renderPlaylistList();
+										}
+									}
+								});
+							});
+							actions.append(rename);
+							header.append(label, actions);
+							panel.append(header);
+							results.append(panel);
+						});
+						status.textContent = `${playlists.length} playlist${playlists.length === 1 ? "" : "s"} ready.`;
+					}
+					function openPlaylistPrompt(track) {
+						openPlaylistDialog({
+							title: "Create playlist",
+							value: `My Playlist ${playlists.length + 1}`,
+							confirmText: "Create",
+							onConfirm: (name) => {
+								const created = createPlaylist(name, track);
+								if (created && track) {
+									status.textContent = `Added “${track.title}” to “${name}”`;
+									renderPlaylistList();
+								}
+							}
+						});
+					}
+					function openTrackPlaylistMenu(track, trigger) {
+						loadPlaylists();
+						const existingMenu = document.querySelector(".music-result-menu.active");
+						if (existingMenu) existingMenu.remove();
+						const menu = document.createElement("div");
+						menu.className = "music-result-menu active";
+						menu.setAttribute("role", "menu");
+						const playlistItems = playlists.length
+							? playlists.map((playlist) => `<button type="button" class="music-result-menu-item" data-playlist-name="${playlist.name}">${playlist.name}</button>`).join("")
+							: "";
+						menu.innerHTML = `
+							<p class="music-result-menu-title">Add to playlist</p>
+							${playlistItems || '<p class="music-result-menu-title">No playlists yet</p>'}
+							<button type="button" class="music-result-menu-item" data-create-playlist="true">Create playlist</button>
+						`;
+						menu.querySelectorAll(".music-result-menu-item").forEach((button) => {
+							button.addEventListener("click", () => {
+								if (button.dataset.createPlaylist === "true") {
+									menu.remove();
+									openPlaylistPrompt(track);
+									return;
+								}
+								const playlistName = String(button.dataset.playlistName || "").trim();
+								if (!playlistName) return;
+								const didAdd = addTrackToPlaylist(playlistName, track);
+								status.textContent = didAdd ? `Added “${track.title}” to “${playlistName}”` : "This track is already in that playlist.";
+								menu.remove();
+							});
+						});
+						const rect = trigger.getBoundingClientRect();
+						menu.style.top = `${Math.min(rect.top + 8, window.innerHeight - 160)}px`;
+						menu.style.left = `${Math.max(16, rect.left - 140)}px`;
+						document.body.append(menu);
+						const handleOutsideClick = (event) => {
+							if (!menu.contains(event.target) && event.target !== trigger) {
+								menu.remove();
+								document.removeEventListener("click", handleOutsideClick);
+							}
+						};
+						document.addEventListener("click", handleOutsideClick);
+					}
 					async function search() {
 						const query = input.value.trim();
-						if (!query) { status.textContent = "Type an artist, song or album first."; return; }
+						if (!query) {
+							status.textContent = "Type an artist, song or album first.";
+							return;
+						}
 						status.textContent = "Searching music...";
+						results.classList.remove("playlist-results");
 						results.replaceChildren();
 						try {
 							const response = await fetch(`/api/music/search?q=${encodeURIComponent(query)}`);
 							const data = await response.json();
 							if (!response.ok) throw new Error(data.error || "Music search failed.");
 							for (const item of data) {
+								const card = document.createElement("div");
+								card.className = "music-result-card";
 								const row = document.createElement("button");
 								row.type = "button";
 								row.className = "music-result";
 								row.innerHTML = `<img src="${item.thumbnail}" alt=""><span><strong></strong><small></small></span><i>&#9654;</i>`;
 								row.querySelector("strong").textContent = item.title;
 								row.querySelector("small").textContent = `${item.channel} / YouTube`;
-								row.addEventListener("click", async () => { title.textContent = item.title; channel.textContent = `${item.channel} / Full track`; const youtube = await getPlayer(); youtube.loadVideoById(item.id); });
-								results.append(row);
+								row.addEventListener("click", async () => {
+									playTrackSelection(item, data);
+										await playTrackVideo(item.id);
+								});
+								const more = document.createElement("button");
+								more.type = "button";
+								more.className = "music-result-more";
+								more.setAttribute("aria-label", `Add ${item.title} to a playlist`);
+								more.title = `Add ${item.title} to a playlist`;
+								more.textContent = "+";
+								more.addEventListener("click", (event) => {
+									event.stopPropagation();
+									loadPlaylists();
+									if (!playlists.length) {
+										openPlaylistPrompt(item);
+										return;
+									}
+									openTrackPlaylistMenu(item, more);
+								});
+								const like = document.createElement("button");
+								like.type = "button";
+								like.className = `music-result-like${isTrackLiked(item) ? " active" : ""}`;
+								like.setAttribute("aria-label", isTrackLiked(item) ? `Unlike ${item.title}` : `Like ${item.title}`);
+								like.title = isTrackLiked(item) ? `Unlike ${item.title}` : `Like ${item.title}`;
+								like.textContent = isTrackLiked(item) ? "♥" : "♡";
+								like.addEventListener("click", (event) => {
+									event.stopPropagation();
+									const liked = toggleLikeSong(item);
+									like.classList.toggle("active", liked);
+									like.textContent = liked ? "♥" : "♡";
+									like.setAttribute("aria-label", liked ? `Unlike ${item.title}` : `Like ${item.title}`);
+									status.textContent = liked ? `Added “${item.title}” to liked songs.` : `Removed “${item.title}” from liked songs.`;
+									renderSidebarRecentTracks();
+								});
+								card.append(row, more, like);
+								results.append(card);
 							}
 							status.textContent = data.length ? `${data.length} tracks found` : "No tracks found. Try another search.";
-						} catch (error) { status.textContent = error instanceof Error ? error.message : "Music search failed."; }
+						} catch (error) {
+							status.textContent = error instanceof Error ? error.message : "Music search failed.";
+						}
 					}
+					loadPlaylists();
+					loadLikedSongs();
+					loadRecentTracks();
+					renderSidebarRecentTracks();
+					const sidebarLinks = document.querySelectorAll(".sidebar-link");
+					sidebarLinks.forEach((link) => {
+						link.addEventListener("click", () => {
+							sidebarLinks.forEach((item) => item.classList.toggle("active", item === link));
+							const nav = link.dataset.nav;
+							if (nav === "library") {
+								renderHomeRecommendations();
+								results.scrollIntoView({ behavior: "smooth", block: "start" });
+								return;
+							}
+							if (nav === "playlists") {
+								renderPlaylistList();
+								results.scrollIntoView({ behavior: "smooth", block: "start" });
+							}
+						});
+					});
 					button.addEventListener("click", search);
-					input.addEventListener("keydown", (event) => { if (event.key === "Enter") { event.preventDefault(); search(); } });
+					input.addEventListener("keydown", (event) => {
+						if (event.key === "Enter") {
+							event.preventDefault();
+							search();
+						}
+					});
 				})();
 			</script>
 		</section>
 		<section id="sj-saved-bar" aria-label="Saved" hidden>
 			<strong>Saved</strong>
 			<div id="sj-saved-links"></div>
+		</section>
+		<section id="sj-playlist-dialog" class="playlist-dialog-overlay" hidden aria-modal="true" role="dialog" aria-labelledby="sj-playlist-dialog-title">
+			<div class="playlist-dialog-card">
+				<header class="playlist-dialog-header">
+					<div>
+						<span class="settings-kicker">SLEEK</span>
+						<h3 id="sj-playlist-dialog-title">Create playlist</h3>
+					</div>
+					<button type="button" class="playlist-dialog-close" aria-label="Close playlist dialog">&times;</button>
+				</header>
+				<label class="playlist-dialog-field">
+					<span>Playlist name</span>
+					<input id="sj-playlist-dialog-input" type="text" maxlength="60" autocomplete="off" />
+				</label>
+				<div class="playlist-dialog-actions">
+					<button type="button" class="playlist-dialog-cancel">Cancel</button>
+					<button type="button" class="playlist-dialog-confirm">Create</button>
+				</div>
+			</div>
 		</section>
 		<button id="sj-music-button" type="button" aria-label="Open pages" title="Open pages"><span class="music-menu-icon" aria-hidden="true"><i></i><i></i><i></i></span></button>
 		<nav id="sj-tools-panel" aria-label="SLEEK pages"><p>SLEEK PAGES</p><button type="button" data-panel-route="sleek://music" onclick="document.getElementById('sj-music-page').hidden = false; document.body.classList.remove('is-home'); document.getElementById('sj-frame-wrapper').style.display = 'none';"><span class="tool-icon">&#9835;</span><span><strong>Music</strong><small>Listen and unwind</small></span></button><button type="button" data-panel-route="sleek://games"><span class="tool-icon">&#9671;</span><span><strong>Games</strong><small>Take a quick break</small></span></button><button type="button" data-panel-route="sleek://notes"><span class="tool-icon">&#9998;</span><span><strong>Notes</strong><small>Keep an idea close</small></span></button></nav>
