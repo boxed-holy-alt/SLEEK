@@ -1,0 +1,11 @@
+# 构建 / 部署产物（dist 只是源码的拷贝，由部署流程生成）
+dist/
+.edgeone/
+
+# 工具缓存
+.firecrawl/
+__pycache__/
+*.pyc
+
+# 系统
+.DS_Store

@@ -1,0 +1,120 @@
+.mod-panel{
+    margin-bottom: 30px;
+}
+.mod-panel canvas{
+    display:block;
+    margin: 0 auto;
+    background: #000;
+    border-radius: 12px;
+}
+.mod-panel .info{
+    padding: 10px 0;
+    margin-bottom: 5px;
+    line-height: 20px;
+    text-align: center;
+    color: #666;
+}
+.mod-panel .info p{
+    line-height: 26px;
+    font-size: 16px;
+    color: #666;
+}
+
+.mod-introtion .hd{
+    margin-bottom: 10px;
+    padding: 15px 20px;
+    background: linear-gradient(45deg, #eef2f9, transparent);
+    border-top-left-radius: 8px;
+    border-bottom-left-radius: 8px;
+}
+.mod-introtion .hd .title{
+    line-height: 32px;
+    font-size: 24px;
+    font-weight: bold;
+    color: var(--primary-color);
+    text-shadow: 2px 1px 0 #cccccc;
+}
+.mod-introtion .hd .title a{
+    color: var(--primary-color);
+}
+.mod-introtion .hd .subtitle{
+    position: relative;
+    line-height: 20px;
+    font-size: 20px;
+    font-weight: bold;
+    color: var(--text-color);
+    opacity: 0.8;
+}
+.mod-introtion .bd{
+    padding: 15px 20px;
+    background-color: rgba(0, 0, 0, 0.02);
+    border: 1px solid rgba(0, 0, 0, 0.02);
+    border-radius: 8px;
+}
+.mod-introtion .bd p{
+    margin-bottom: 12px;
+    line-height: 26px;
+    text-indent: 2em;
+    font-size: 16px;
+    color: #666;
+}
+.mod-introtion .bd p:last-child{
+    margin-bottom: 0;
+}
+
+.mod-button{
+    height: 32px;
+    padding: 15px 0;
+    margin-bottom: 15px;
+    text-align: center;
+}
+.mod-button span,.mod-button a{
+    display: inline-block;
+    height: 28px;
+    vertical-align: middle;
+}
+.mod-button .btn{
+    display: inline-block;
+    height: 26px;
+    padding: 0 12px;
+    line-height: 26px;
+    background-color: #ebf0f4;
+    border: 1px solid #d1d9e0;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 13px;
+    color: #25292e;
+    border-radius: 3px;
+}
+.mod-button .btn:hover{
+    background: #f5f6f7;
+}
+
+
+@media screen and (max-width: 800px){
+    .mod-panel canvas{
+        width: 100%;
+        border-radius: 8px;
+    }
+
+    .mod-panel .info p{
+        line-height: 20px;
+        font-size: 14px;
+    }
+
+    .mod-introtion .hd{
+        padding: 12px 15px;
+    }
+    .mod-introtion .hd .title{
+        line-height: 24px;
+        font-size: 20px;
+    }
+    .mod-introtion .hd .subtitle{
+        line-height: 18px;
+        font-size: 16px;
+    }
+    .mod-introtion .bd p{
+        line-height: 24px;
+        font-size: 15px;
+    }
+}

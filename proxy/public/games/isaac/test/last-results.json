@@ -1,0 +1,352 @@
+[
+ {
+  "name": "window.__game 已暴露",
+  "pass": true,
+  "detail": ""
+ },
+ {
+  "name": "初始状态为 title",
+  "pass": true,
+  "detail": ""
+ },
+ {
+  "name": "状态切换为 playing",
+  "pass": true,
+  "detail": "playing"
+ },
+ {
+  "name": "玩家已生成且满血",
+  "pass": true,
+  "detail": "hp=8/8"
+ },
+ {
+  "name": "起始房间类型为 start",
+  "pass": true,
+  "detail": "start"
+ },
+ {
+  "name": "本层房间数在 5-13 之间",
+  "pass": true,
+  "detail": "5 间"
+ },
+ {
+  "name": "本层有 1 个 Boss 房",
+  "pass": true,
+  "detail": "{\"start\": 1, \"normal\": 2, \"boss\": 1, \"treasure\": 1}"
+ },
+ {
+  "name": "本层有 1 个宝箱/道具房",
+  "pass": true,
+  "detail": "{\"start\": 1, \"normal\": 2, \"boss\": 1, \"treasure\": 1}"
+ },
+ {
+  "name": "按 D 向右移动",
+  "pass": true,
+  "detail": "450 -> 539"
+ },
+ {
+  "name": "按 W 向上移动",
+  "pass": true,
+  "detail": "270 -> 192"
+ },
+ {
+  "name": "玩家被限制在房间内",
+  "pass": true,
+  "detail": "(539,192)"
+ },
+ {
+  "name": "按方向键生成眼泪",
+  "pass": true,
+  "detail": "1 颗"
+ },
+ {
+  "name": "角色朝向跟随射击方向",
+  "pass": true,
+  "detail": "left"
+ },
+ {
+  "name": "眼泪到达射程后消失",
+  "pass": true,
+  "detail": ""
+ },
+ {
+  "name": "起始房间至少有一扇门",
+  "pass": true,
+  "detail": "['right']"
+ },
+ {
+  "name": "成功进入一个普通战斗房",
+  "pass": true,
+  "detail": "normal"
+ },
+ {
+  "name": "房间内有敌人",
+  "pass": true,
+  "detail": "4 个: fly,horf,pooter"
+ },
+ {
+  "name": "未清房时门是关闭的",
+  "pass": true,
+  "detail": "2/2 关闭"
+ },
+ {
+  "name": "敌人受到伤害后掉血",
+  "pass": true,
+  "detail": "6 -> 3"
+ },
+ {
+  "name": "房间敌人被清空",
+  "pass": true,
+  "detail": ""
+ },
+ {
+  "name": "击杀数已统计",
+  "pass": true,
+  "detail": "4 杀"
+ },
+ {
+  "name": "清房后房间标记为 cleared",
+  "pass": true,
+  "detail": ""
+ },
+ {
+  "name": "清房后所有门打开",
+  "pass": true,
+  "detail": "2/2 打开"
+ },
+ {
+  "name": "用 WASD 走过门后房间发生切换",
+  "pass": true,
+  "detail": "room 1 -> 2 (方向 right)"
+ },
+ {
+  "name": "成功进入道具房",
+  "pass": true,
+  "detail": "treasure"
+ },
+ {
+  "name": "道具房里有基座",
+  "pass": true,
+  "detail": "['pedestal', 'rock', 'rock', 'rock', 'chest']"
+ },
+ {
+  "name": "走上去自动拾取道具",
+  "pass": true,
+  "detail": "SPOON BENDER"
+ },
+ {
+  "name": "道具实际改变了属性或攻击方式",
+  "pass": true,
+  "detail": "属性变化=[] 标记变化=['homing']"
+ },
+ {
+  "name": "拾取道具数已统计",
+  "pass": true,
+  "detail": "1"
+ },
+ {
+  "name": "同名道具可叠加 (射速 +1.2)",
+  "pass": true,
+  "detail": "2.80 -> 4.00"
+ },
+ {
+  "name": "Brimstone 改变攻击方式",
+  "pass": true,
+  "detail": ""
+ },
+ {
+  "name": "Brimstone 蓄力后发射激光",
+  "pass": true,
+  "detail": "1 道"
+ },
+ {
+  "name": "进入 Boss 房",
+  "pass": true,
+  "detail": "boss"
+ },
+ {
+  "name": "Boss 已生成",
+  "pass": true,
+  "detail": "monstro hp=160"
+ },
+ {
+  "name": "Boss 有多段攻击状态机",
+  "pass": true,
+  "detail": "hop,hopCharge,idle,slamCharge,slamDown,slamUp,vomit,vomitCharge"
+ },
+ {
+  "name": "Boss 被击杀",
+  "pass": true,
+  "detail": ""
+ },
+ {
+  "name": "Boss 击杀已统计",
+  "pass": true,
+  "detail": "1"
+ },
+ {
+  "name": "Boss 房掉落奖励道具与活板门",
+  "pass": true,
+  "detail": "['rock', 'rock', 'rock', 'rock', 'rock', 'rock', 'rock', 'pedestal', 'trapdoor']"
+ },
+ {
+  "name": "踏入活板门进入下一层",
+  "pass": true,
+  "detail": "L1 -> L2"
+ },
+ {
+  "name": "新一层重新生成 5-13 个房间",
+  "pass": true,
+  "detail": "7 间"
+ },
+ {
+  "name": "状态切换为 dead",
+  "pass": true,
+  "detail": ""
+ },
+ {
+  "name": "死亡界面可见",
+  "pass": true,
+  "detail": ""
+ },
+ {
+  "name": "死亡界面显示击杀数/道具数/存活时间",
+  "pass": true,
+  "detail": "击 杀 数 5 拾取道具 4 存活时间 0:22 到达层数 2 / 12 探索房间 1 / 7 击败 BOSS 1"
+ },
+ {
+  "name": "状态切换为 win",
+  "pass": true,
+  "detail": ""
+ },
+ {
+  "name": "通关界面可见",
+  "pass": true,
+  "detail": ""
+ },
+ {
+  "name": "移动端显示触控 UI",
+  "pass": true,
+  "detail": ""
+ },
+ {
+  "name": "移动端画布按比例完整缩放 (未被裁切)",
+  "pass": true,
+  "detail": "canvas 404x242, 期望 404x242"
+ },
+ {
+  "name": "移动端画布完全在视口内",
+  "pass": true,
+  "detail": "x=5 y=222 w=404"
+ },
+ {
+  "name": "拖动虚拟摇杆能让角色移动",
+  "pass": true,
+  "detail": "450 -> 583"
+ },
+ {
+  "name": "按射击按钮能发射眼泪",
+  "pass": true,
+  "detail": "1 颗"
+ },
+ {
+  "name": "射击按钮控制朝向",
+  "pass": true,
+  "detail": "left"
+ },
+ {
+  "name": "600 次地牢生成全部合法",
+  "pass": true,
+  "detail": "ok=600/600 房间数分布={\"5\": 27, \"6\": 71, \"7\": 78, \"8\": 53, \"9\": 67, \"10\": 75, \"11\": 54, \"12\": 44, \"13\": 131} 异常=[]"
+ },
+ {
+  "name": "13 个 Boss 在 600 次生成中全部出现过",
+  "pass": true,
+  "detail": "{\"duke\": 45, \"larry\": 49, \"monstroII\": 51, \"mom\": 25, \"scolex\": 51, \"hush\": 50, \"satan\": 50, \"isaacBoss\": 50, \"blueBaby\": 50, \"monstro\": 54, \"gurdy\": 49, \"momsHeart\": 24, \"chub\": 52}"
+ },
+ {
+  "name": "商店房只在够大的楼层出现且不重复",
+  "pass": true,
+  "detail": "502/600 层带商店"
+ },
+ {
+  "name": "能找到带商店的楼层",
+  "pass": true,
+  "detail": "L4"
+ },
+ {
+  "name": "商店房里有货架",
+  "pass": true,
+  "detail": "{\"x\": 270, \"y\": 270, \"price\": 10}"
+ },
+ {
+  "name": "没钱时买不走东西",
+  "pass": true,
+  "detail": "已售出 0 件"
+ },
+ {
+  "name": "有钱时成功购买并扣款",
+  "pass": true,
+  "detail": "{\"sold\": 1, \"coins\": 5, \"items\": 1, \"maxHp\": 8}"
+ },
+ {
+  "name": "购买后确实拿到了东西",
+  "pass": true,
+  "detail": "道具 0->1, 上限 8"
+ },
+ {
+  "name": "护盾挡下第一次伤害",
+  "pass": true,
+  "detail": "{\"hp0\": 8, \"hp1\": 8, \"hp2\": 6}"
+ },
+ {
+  "name": "护盾用掉后第二次照常掉血",
+  "pass": true,
+  "detail": "{\"hp0\": 8, \"hp1\": 8, \"hp2\": 6}"
+ },
+ {
+  "name": "1UP 让致命伤变成复活",
+  "pass": true,
+  "detail": "{\"dead\": false, \"hp\": 2, \"state\": \"playing\"}"
+ },
+ {
+  "name": "中毒持续掉血",
+  "pass": true,
+  "detail": "7 -> 3"
+ },
+ {
+  "name": "跟班已生成",
+  "pass": true,
+  "detail": "1 个"
+ },
+ {
+  "name": "跟班会自动开火并造成伤害",
+  "pass": true,
+  "detail": "目标血量 400 -> 393.9"
+ },
+ {
+  "name": "Knight 正面几乎免疫",
+  "pass": true,
+  "detail": "{\"hp0\": 16, \"hpFront\": 14.4, \"hpBack\": -5.6}"
+ },
+ {
+  "name": "Knight 背面吃满伤害",
+  "pass": true,
+  "detail": "{\"hp0\": 16, \"hpFront\": 14.4, \"hpBack\": -5.6}"
+ },
+ {
+  "name": "Globin 第一次死亡会瘫成一滩",
+  "pass": true,
+  "detail": "{\"deadFirst\": false, \"downed\": true}"
+ },
+ {
+  "name": "帧率 >= 50",
+  "pass": true,
+  "detail": "119 fps"
+ },
+ {
+  "name": "无 console 报错",
+  "pass": true,
+  "detail": ""
+ }
+]

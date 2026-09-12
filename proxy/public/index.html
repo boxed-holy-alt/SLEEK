@@ -5,7 +5,7 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<title>𝙎𝙇𝙀𝙀𝙆 𝘽𝙊𝙊𝙆𝙎</title>
 		<link rel="icon" type="image/png" href="/sleek-logo.png" />
-		<link rel="stylesheet" href="/index.css" />
+		<link rel="stylesheet" href="/index.css?v=games-visual-5" />
 
 				<meta name="robots" content="noindex" />
 
@@ -937,6 +937,46 @@
 				})();
 			</script>
 		</section>
+		<section id="sj-games-page" hidden aria-labelledby="sj-games-title">
+			<div class="games-shell">
+				<header class="games-header">
+					<div>
+						<p class="games-eyebrow">OUR PLAY, STATION</p>
+						<h2 id="sj-games-title">SLEEKSTATION</h2>
+						<p>PLAY GAMES BROOO!</p>
+					</div>
+					<button id="sj-games-close" type="button" aria-label="Go home">⌂</button>
+				</header>
+				<div class="games-toolbar">
+					<label class="games-search">
+						<span aria-hidden="true">⌕</span>
+						<input id="sj-games-query" type="search" placeholder="Find a game" autocomplete="off" />
+					</label>
+					<div class="games-filters" role="group" aria-label="Game categories">
+						<button class="games-filter active" type="button" data-game-filter="all">All</button>
+						<button class="games-filter" type="button" data-game-filter="strategy">Strategy</button>
+						<button class="games-filter" type="button" data-game-filter="arcade">Arcade</button>
+						<button class="games-filter" type="button" data-game-filter="adventure">Adventure</button>
+						<button class="games-filter" type="button" data-game-filter="library">Library</button>
+						<button class="games-filter" type="button" data-game-filter="gn-math">Gn-Math</button>
+						<button class="games-filter" type="button" data-game-filter="party">Party</button>
+						<button class="games-filter" type="button" data-game-filter="puzzle">Puzzle</button>
+					</div>
+				</div>
+				<p id="sj-games-status" class="games-status">Choose a game. Every title runs from SLEEK's local game library.</p>
+				<div id="sj-games-grid" class="games-grid" aria-live="polite"></div>
+				<section id="sj-game-stage" class="game-stage" hidden aria-label="Running game">
+					<header class="game-stage-header">
+						<div><span class="games-eyebrow">NOW PLAYING</span><h3 id="sj-game-stage-title">Game</h3></div>
+						<div class="game-stage-actions">
+							<button id="sj-game-stage-fullscreen" type="button" aria-label="Fullscreen game">Fullscreen</button>
+							<button id="sj-game-stage-back" type="button">Close</button>
+						</div>
+					</header>
+					<iframe id="sj-game-stage-frame" title="SLEEK game" allow="fullscreen" loading="eager"></iframe>
+				</section>
+			</div>
+		</section>
 		<section id="sj-saved-bar" aria-label="Saved" hidden>
 			<strong>Saved</strong>
 			<div id="sj-saved-links"></div>
@@ -961,7 +1001,7 @@
 			</div>
 		</section>
 		<button id="sj-music-button" type="button" aria-label="Open pages" title="Open pages"><span class="music-menu-icon" aria-hidden="true"><i></i><i></i><i></i></span></button>
-		<nav id="sj-tools-panel" aria-label="SLEEK pages"><p>SLEEK PAGES</p><button type="button" data-panel-route="sleek://music" onclick="document.getElementById('sj-music-page').hidden = false; document.body.classList.remove('is-home'); document.getElementById('sj-frame-wrapper').style.display = 'none';"><span class="tool-icon">&#9835;</span><span><strong>Music</strong><small>Listen and unwind</small></span></button><button type="button" data-panel-route="sleek://games"><span class="tool-icon">&#9671;</span><span><strong>Games</strong><small>Take a quick break</small></span></button><button type="button" data-panel-route="sleek://notes"><span class="tool-icon">&#9998;</span><span><strong>Notes</strong><small>Keep an idea close</small></span></button></nav>
+		<nav id="sj-tools-panel" aria-label="SLEEK pages"><p>SLEEK PAGES</p><button type="button" data-panel-route="sleek://music" onclick="document.getElementById('sj-music-page').hidden = false; document.body.classList.remove('is-home'); document.getElementById('sj-frame-wrapper').style.display = 'none';"><span class="tool-icon">&#9835;</span><span><strong>Music</strong><small>Listen and unwind</small></span></button><button type="button" data-panel-route="sleek://games"><span class="tool-icon">&#9671;</span><span><strong>Games</strong><small>Take a quick break</small></span></button></nav>
 		<section id="sj-quick-links" aria-label="Quick links">
 			<p class="quick-links-heading">Quick links</p>
 			<div class="quick-links-list">
@@ -984,6 +1024,6 @@
 			<div id="sj-loading" hidden role="status" aria-live="polite"><span class="loading-mark" aria-hidden="true"></span><strong>Loading page</strong><span class="loading-dots" aria-hidden="true">...</span></div>
 		</div>
 
-		<script src="/index.js"></script>
+		<script src="/index.js?v=games-library-5"></script>
 	</body>
 </html>

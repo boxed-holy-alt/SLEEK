@@ -73,6 +73,16 @@ const musicButton = document.getElementById("sj-music-button");
 const toolsPanel = document.getElementById("sj-tools-panel");
 const musicPage = document.getElementById("sj-music-page");
 const musicClose = document.getElementById("sj-music-close");
+const gamesPage = document.getElementById("sj-games-page");
+const gamesClose = document.getElementById("sj-games-close");
+const gamesQuery = document.getElementById("sj-games-query");
+const gamesStatus = document.getElementById("sj-games-status");
+const gamesGrid = document.getElementById("sj-games-grid");
+const gameStage = document.getElementById("sj-game-stage");
+const gameStageFrame = document.getElementById("sj-game-stage-frame");
+const gameStageTitle = document.getElementById("sj-game-stage-title");
+const gameStageBack = document.getElementById("sj-game-stage-back");
+const gameStageFullscreen = document.getElementById("sj-game-stage-fullscreen");
 const nowPlaying = document.getElementById("sj-now-playing");
 const playerChannel = document.getElementById("sj-player-channel");
 const youtubePlayerElement = document.getElementById("sj-youtube-player");
@@ -116,6 +126,7 @@ const tabs = [];
 let initPromise;
 const homeAddress = "sleek://home";
 const musicAddress = "sleek://music";
+const gamesAddress = "sleek://games";
 const ACCOUNT_KEY = "sleek-account";
 const HISTORY_KEY = "sleek-history";
 const HISTORY_ENABLED_KEY = "sleek-history-enabled";
@@ -493,8 +504,11 @@ renderQuickLinks();
 function showHome(tab) {
 	const targetTab = tab || activeTab || createTab();
 	musicPage.hidden = true;
+	gamesPage.hidden = true;
+	gameStage.hidden = true;
+	gameStageFrame.src = "about:blank";
 	document.body.classList.add("is-home");
-	document.body.classList.remove("music-open");
+	document.body.classList.remove("music-open", "games-open");
 	if (targetTab.frameElement) targetTab.frameElement.src = "about:blank";
 	targetTab.url = homeAddress;
 	targetTab.button.querySelector(".sj-tab-title").textContent = "New tab";
@@ -507,7 +521,10 @@ function showHome(tab) {
 }
 function showMusic(tab) {
 	const targetTab = tab || activeTab || createTab();
-	document.body.classList.remove("is-home");
+	gamesPage.hidden = true;
+	gameStage.hidden = true;
+	gameStageFrame.src = "about:blank";
+	document.body.classList.remove("is-home", "games-open");
 	document.body.classList.add("music-open");
 	toolsPanel.hidden = true;
 	musicButton.setAttribute("aria-expanded", "false");
@@ -521,6 +538,116 @@ function showMusic(tab) {
 	tabAddress.value = musicAddress;
 	activeTab = targetTab;
 	updateBookmarkState();
+}
+function showGamesPage(tab) {
+	const targetTab = tab || activeTab || createTab();
+	document.body.classList.remove("is-home", "music-open");
+	document.body.classList.add("games-open");
+	toolsPanel.hidden = true;
+	musicButton.setAttribute("aria-expanded", "false");
+	musicPage.hidden = true;
+	gamesPage.hidden = false;
+	gameStage.hidden = true;
+	gameStageFrame.src = "about:blank";
+	frameWrapper.style.display = "none";
+	loadingScreen.hidden = true;
+	if (targetTab.frameElement) targetTab.frameElement.src = "about:blank";
+	targetTab.url = gamesAddress;
+	targetTab.button.querySelector(".sj-tab-title").textContent = "Games";
+	address.value = "";
+	tabAddress.value = gamesAddress;
+	activeTab = targetTab;
+	updateBookmarkState();
+	renderGames();
+	void loadGamesCatalog();
+}
+let realGames = Array.isArray(window.__SLEEK_GAMES_CATALOG__) ? window.__SLEEK_GAMES_CATALOG__ : [];
+async function loadGamesCatalog() {
+	if (realGames.length) {
+		if (gamesStatus) gamesStatus.textContent = `${realGames.length} ported games available locally in SLEEK.`;
+		renderGames();
+		return;
+	}
+	try {
+		const response = await fetch("/api/games/catalog");
+		if (!response.ok) throw new Error(`Games catalog returned ${response.status}`);
+		const catalog = await response.json();
+		if (Array.isArray(catalog) && catalog.length) {
+			realGames = catalog;
+			if (gamesStatus) gamesStatus.textContent = `${catalog.length} ported games available locally in SLEEK.`;
+			renderGames();
+		}
+	} catch (error) {
+		console.warn("Could not load the extended games catalog", error);
+	}
+}
+function launchGame(game) {
+	if (!gameStage || !gameStageFrame) return;
+	gamesGrid.hidden = true;
+	gameStage.hidden = false;
+	gameStageTitle.textContent = game.title;
+	gamesStatus.textContent = `${game.title} is running locally inside SLEEK.`;
+	gameStageFrame.src = game.path;
+	gameStageFrame.focus();
+}
+function closeGame() {
+	if (document.fullscreenElement) void document.exitFullscreen?.();
+	gameStage.hidden = true;
+	gameStageFrame.src = "about:blank";
+	gamesGrid.hidden = false;
+	gamesStatus.textContent = "Choose a game. Every title runs from SLEEK's local game library.";
+}
+function renderGames() {
+	if (!gamesGrid) return;
+	const query = String(gamesQuery?.value || "").trim().toLocaleLowerCase();
+	const selectedFilter = document.querySelector(".games-filter.active")?.dataset.gameFilter || "all";
+	const visibleGames = realGames.filter((game) => {
+		const matchesFilter = selectedFilter === "all" || game.category === selectedFilter;
+		const searchText = `${game.title} ${game.description} ${game.label}`.toLocaleLowerCase();
+		return matchesFilter && (!query || searchText.includes(query));
+	});
+	gamesGrid.replaceChildren();
+	if (!visibleGames.length) {
+		const empty = document.createElement("p");
+		empty.className = "games-empty";
+		empty.textContent = "No games match that search.";
+		gamesGrid.append(empty);
+		return;
+	}
+	for (const game of visibleGames) {
+		const card = document.createElement("article");
+		card.className = "game-card";
+		card.tabIndex = 0;
+		card.setAttribute("role", "button");
+		card.setAttribute("aria-label", `Play ${game.title}`);
+		const cover = document.createElement("div");
+		cover.className = "game-card-cover";
+		if (game.cover) {
+			const image = document.createElement("img");
+			image.src = game.cover;
+			image.alt = `${game.title} cover`;
+			image.loading = "lazy";
+			cover.append(image);
+		} else {
+			cover.textContent = game.icon;
+		}
+		const category = document.createElement("span");
+		category.className = "game-card-category";
+		category.textContent = game.label;
+		const title = document.createElement("h3");
+		title.textContent = game.title;
+		const description = document.createElement("p");
+		description.textContent = game.description;
+		card.addEventListener("click", () => launchGame(game));
+		card.addEventListener("keydown", (event) => {
+			if (event.key === "Enter" || event.key === " ") {
+				event.preventDefault();
+				launchGame(game);
+			}
+		});
+		card.append(cover, title, category, description);
+		gamesGrid.append(card);
+	}
 }
 function showLoading() {
 	loadingScreen.hidden = false;
@@ -542,7 +669,7 @@ function attachFrame(tab) {
 	if (tab.frame) return;
 	const watcher = new $scramjetUtils.UrlWatcherPlugin((url) => {
 		const resolvedUrl = String(url || "");
-		const isCustomRoute = tab.url === homeAddress || tab.url === musicAddress;
+		const isCustomRoute = tab.url === homeAddress || tab.url === musicAddress || tab.url === gamesAddress;
 		if (!resolvedUrl || /^about:blank$/i.test(resolvedUrl)) {
 			if (isCustomRoute) {
 				if (tab === activeTab) {
@@ -633,7 +760,12 @@ async function navigate(url) {
 		showMusic(activeTab);
 		return;
 	}
-	document.body.classList.remove("is-home");
+	if (url.toLowerCase() === gamesAddress) {
+		showGamesPage(activeTab);
+		return;
+	}
+	gamesPage.hidden = true;
+	document.body.classList.remove("is-home", "games-open");
 	if (!/^[a-z][a-z\d+.-]*:\/\//i.test(url)) {
 		const looksLikeHost = url.includes(".") || url.startsWith("localhost:") || url.startsWith("[");
 		if (looksLikeHost) url = `https://${url}`;
@@ -804,6 +936,12 @@ function openSleekPage(route) {
 		musicButton.setAttribute("aria-expanded", "false");
 		return;
 	}
+	if (nextRoute === gamesAddress) {
+		showGamesPage(activeTab || createTab());
+		toolsPanel.hidden = true;
+		musicButton.setAttribute("aria-expanded", "false");
+		return;
+	}
 	toolsPanel.hidden = true;
 	musicButton.setAttribute("aria-expanded", "false");
 	navigate(nextRoute).catch((navigationError) => showErrorScreen(navigationError.message, navigationError.stack));
@@ -815,6 +953,18 @@ for (const page of toolsPanel.querySelectorAll("[data-panel-route]")) {
 	});
 }
 musicClose.addEventListener("click", () => openSleekPage(homeAddress));
+gamesClose.addEventListener("click", () => openSleekPage(homeAddress));
+gameStageBack.addEventListener("click", closeGame);
+gameStageFullscreen.addEventListener("click", () => {
+		void (gameStage.requestFullscreen?.() || gameStageFrame.requestFullscreen?.());
+});
+gamesQuery.addEventListener("input", renderGames);
+for (const filter of document.querySelectorAll(".games-filter")) {
+	filter.addEventListener("click", () => {
+		document.querySelectorAll(".games-filter").forEach((item) => item.classList.toggle("active", item === filter));
+		renderGames();
+	});
+}
 function formatDuration(seconds) {
 	const safeSeconds = Number.isFinite(seconds) ? Math.max(0, seconds) : 0;
 	const total = Math.floor(safeSeconds);
