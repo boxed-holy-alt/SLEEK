@@ -7,19 +7,30 @@ import PlaygroundView from "./pages/Playground";
 import SettingsView from "./pages/SettingsPage";
 import { Omnibox } from "./pages/BrowserView";
 import { requestsState } from "./pages/RequestViewer";
+import ChatView from "./pages/ChatView";
 
 const App: Component<
   {},
   {},
   {
-    activeTab: "browser" | "requests" | "playground" | "settings";
+    activeTab: "chat" | "browser" | "requests" | "playground" | "settings";
   }
 > = function (cx) {
-  this.activeTab ??= "browser";
+  this.activeTab ??= "chat";
   return (
     <div>
       <div class="top-bar">
         <div class="tab-bar">
+          <button
+            class={use(this.activeTab).map(
+              (tab) => `tab-button ${tab === "chat" ? "active" : ""}`,
+            )}
+            on:click={() => {
+              this.activeTab = "chat";
+            }}
+          >
+            <span class="tab-symbol">✦</span> Slick
+          </button>
           <button
             class={use(this.activeTab).map(
               (tab) => `tab-button ${tab === "browser" ? "active" : ""}`,
@@ -71,6 +82,13 @@ const App: Component<
       {use(this.activeTab)
         .map((tab) => tab === "browser")
         .andThen(<Omnibox />)}
+      <div
+        class={use(this.activeTab).map(
+          (tab) => `tab-panel chat-panel ${tab === "chat" ? "active" : ""}`,
+        )}
+      >
+        <ChatView onOpenBrowser={() => { this.activeTab = "browser"; }} />
+      </div>
       <div
         class={use(this.activeTab).map(
           (tab) =>
@@ -179,6 +197,7 @@ App.style = css`
     background: #181818;
     color: #d0d0d0;
   }
+  .tab-symbol { color: #c7f05a; margin-right: 5px; }
   .tab-button.active {
     background: #1f1f1f;
     color: #fff;

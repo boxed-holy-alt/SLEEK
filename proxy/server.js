@@ -26,6 +26,13 @@ const gamesDirectories = [...new Set([
 	...defaultExternalGamesDirectories.filter((directory) => fs.existsSync(directory)),
 	path.join(publicDirectory, "games"),
 ])].filter((directory) => fs.existsSync(directory));
+const controllerIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-controller" viewBox="0 0 16 16" aria-hidden="true"><path d="M11.5 6.027a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0m-1.5 1.5a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1m2.5-.5a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0m-1.5 1.5a.5.5 0 1 0 0-1 .5.5 0 0 1 0 1m-6.5-3h1v1h1v1h-1v1h-1v-1h-1v-1h1z"/><path d="M3.051 3.26a.5.5 0 0 1 .354-.613l1.932-.518a.5.5 0 0 1 .62.39c.655-.079 1.35-.117 2.043-.117.72 0 1.443.041 2.12.126a.5.5 0 0 1 .622-.399l1.932.518a.5.5 0 0 1 .306.729q.211.136.373.297c.408.408.78 1.05 1.095 1.772.32.733.599 1.591.805 2.466s.34 1.78.364 2.606c.024.816-.059 1.602-.328 2.21a1.42 1.42 0 0 1-1.445.83c-.636-.067-1.115-.394-1.513-.773-.245-.232-.496-.526-.739-.808-.126-.148-.25-.292-.368-.423-.728-.804-1.597-1.527-3.224-1.527s-2.496.723-3.224 1.527c-.119.131-.242.275-.368.423-.243.282-.494.575-.739.808-.398.38-.877.706-1.513.773a1.42 1.42 0 0 1-1.445-.83c-.27-.608-.352-1.395-.329-2.21.024-.826.16-1.73.365-2.606.206-.875.486-1.733.805-2.466.315-.722.687-1.364 1.094-1.772a2.3 2.3 0 0 1 .433-.335l-.028-.079zm2.036.412c-.877.185-1.469.443-1.733.708-.276.276-.587.783-.885 1.465a14 14 0 0 0-.748 2.295 12.4 12.4 0 0 0-.339 2.406c-.022.755.062 1.368.243 1.776a.42.42 0 0 0 .426.24c.327-.034.61-.199.929-.502.212-.202.4-.423.615-.674.133-.156.276-.323.44-.504C4.861 9.969 5.978 9.027 8 9.027s3.139.942 3.965 1.855c.164.181.307.348.44.504.214.251.403.472.615.674.318.303.601.468.929.503a.42.42 0 0 0 .426-.241c.18-.408.265-1.02.243-1.776a12.4 12.4 0 0 0-.339-2.406 14 14 0 0 0-.748-2.295c-.298-.682-.61-1.19-.885-1.465-.264-.265-.856-.523-1.733-.708-.85-.179-1.877-.27-2.913-.27s-2.063.091-2.913.27"/></svg>';
+
+function isSafetyOnlyReply(reply) {
+	if (typeof reply !== "string" || !reply.trim()) return false;
+	const lines = reply.split("\n").map((line) => line.trim()).filter(Boolean);
+	return lines.length > 0 && lines.every((line) => /^(user safety|response safety|safety)\s*:/i.test(line));
+}
 
 function findGameEntry(directory) {
 	const candidates = ["index.html", "game.html", "play.html"];
@@ -153,7 +160,7 @@ function discoverGames() {
 				label: "Ported",
 				path: relativePath,
 				cover: coverPath,
-				icon: "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" class=\"bi bi-controller\" viewBox=\"0 0 16 16\">",
+				icon: controllerIcon,
 			});
 		}
 	}
@@ -181,7 +188,7 @@ function discoverGnMathGames() {
 			label: "Gn-Math",
 			path: `/gn-math-games/${htmlFile.split(path.sep).map(encodeURIComponent).join("/")}`,
 			cover: `/gn-math-covers/${coverFile.split(path.sep).map(encodeURIComponent).join("/")}`,
-			icon: "<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-controller" viewBox="0 0 16 16">",
+			icon: controllerIcon,
 		}];
 	});
 }
@@ -311,6 +318,61 @@ app.get("/api/music/search", async (req, res) => {
 		res.json(results);
 	} catch (error) {
 		res.status(502).json({ error: error instanceof Error ? error.message : "Music search failed." });
+	}
+});
+
+app.post("/api/slick/chat", express.json({ limit: "8mb" }), async (req, res) => {
+	const apiKey = String(process.env.OPENROUTER_API_KEY || "").trim();
+	if (!apiKey) return res.status(503).json({ error: "Slick is not configured yet. Add OPENROUTER_API_KEY to .env." });
+	const messages = Array.isArray(req.body?.messages)
+		? req.body.messages
+			.filter((message) => message && ["user", "assistant"].includes(message.role) && (typeof message.content === "string" || Array.isArray(message.content)))
+			.slice(-20)
+			.map((message) => ({
+				role: message.role,
+				content: typeof message.content === "string"
+					? message.content.slice(0, 4000)
+					: message.content.filter((part) => part?.type === "text" && typeof part.text === "string" || part?.type === "image_url" && typeof part.image_url?.url === "string" && part.image_url.url.startsWith("data:image/")).slice(0, 2),
+			}))
+		: [];
+	if (!messages.length || messages.at(-1).role !== "user") return res.status(400).json({ error: "A user message is required." });
+	const hasImage = messages.some((message) => Array.isArray(message.content) && message.content.some((part) => part.type === "image_url"));
+	try {
+		const endpoint = process.env.OPENROUTER_API_URL || "https://openrouter.ai/api/v1/chat/completions";
+		const models = hasImage
+			? [...new Set([process.env.OPENROUTER_VISION_MODEL || "google/gemma-4-26b-a4b-it:free", "openrouter/free"])]
+			: [process.env.OPENROUTER_MODEL || "openrouter/free"];
+		let response;
+		let payload;
+		for (const model of models) {
+			response = await fetch(endpoint, {
+				method: "POST",
+				headers: {
+					Authorization: `Bearer ${apiKey}`,
+					"Content-Type": "application/json",
+					Accept: "application/json",
+					"HTTP-Referer": "http://localhost:3030",
+					"X-Title": "SLEEK",
+				},
+				body: JSON.stringify({
+					model,
+					messages: [{ role: "system", content: "You are Slick, the friendly AI assistant inside SLEEK. Be concise, helpful, and casual. Reply in the user's language. When analyzing images, describe what you see directly. Never output internal safety labels, moderation metadata, or phrases like 'User Safety' or 'Response Safety'." }, ...messages],
+					temperature: 0.7,
+					max_tokens: 700,
+				}),
+			});
+			payload = await response.json().catch(() => ({}));
+			const candidateReply = payload.choices?.[0]?.message?.content;
+			if (response.ok && !(hasImage && (!candidateReply || isSafetyOnlyReply(candidateReply)))) break;
+			if (!hasImage && response.status !== 429) break;
+		}
+		if (!response.ok) return res.status(502).json({ error: payload.error?.message || "OpenRouter could not answer right now." });
+		const reply = payload.choices?.[0]?.message?.content;
+		if (typeof reply !== "string" || !reply.trim()) return res.status(502).json({ error: hasImage ? "Slick could not get a description from the image model. Please try again." : "OpenRouter returned an empty response." });
+		if (hasImage && isSafetyOnlyReply(reply)) return res.status(502).json({ error: "Slick could not get a description from the image model. Please try again." });
+		res.json({ reply: reply.trim() });
+	} catch (error) {
+		res.status(502).json({ error: error instanceof Error ? error.message : "Slick could not connect to OpenRouter." });
 	}
 });
 

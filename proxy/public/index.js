@@ -74,6 +74,22 @@ const toolsPanel = document.getElementById("sj-tools-panel");
 const musicPage = document.getElementById("sj-music-page");
 const musicClose = document.getElementById("sj-music-close");
 const gamesPage = document.getElementById("sj-games-page");
+const slickPage = document.getElementById("sj-slick-page");
+const slickClose = document.getElementById("sj-slick-close");
+const slickForm = document.getElementById("sj-slick-form");
+const slickInput = document.getElementById("sj-slick-input");
+const slickImage = document.getElementById("sj-slick-image");
+const slickAttachment = document.getElementById("sj-slick-attachment");
+const slickAttachmentPreview = document.getElementById("sj-slick-attachment-preview");
+const slickAttachmentName = document.getElementById("sj-slick-attachment-name");
+const slickAttachmentRemove = document.getElementById("sj-slick-attachment-remove");
+const slickMessages = document.getElementById("sj-slick-messages");
+const slickStatus = document.getElementById("sj-slick-status");
+const slickChatList = document.getElementById("sj-slick-chat-list");
+const slickNewChat = document.getElementById("sj-slick-new-chat");
+const slickSidebarToggle = document.getElementById("sj-slick-sidebar-toggle");
+const slickChatSearch = document.getElementById("sj-slick-search");
+const slickGreeting = document.getElementById("sj-slick-greeting");
 const gamesClose = document.getElementById("sj-games-close");
 const gamesQuery = document.getElementById("sj-games-query");
 const gamesStatus = document.getElementById("sj-games-status");
@@ -127,6 +143,8 @@ let initPromise;
 const homeAddress = "sleek://home";
 const musicAddress = "sleek://music";
 const gamesAddress = "sleek://games";
+const slickAddress = "sleek://slick";
+const fallbackControllerIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-controller" viewBox="0 0 16 16" aria-hidden="true"><path d="M11.5 6.027a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0m-1.5 1.5a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1m2.5-.5a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0m-1.5 1.5a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1m-6.5-3h1v1h1v1h-1v1h-1v-1h-1v-1h1z"/><path d="M3.051 3.26a.5.5 0 0 1 .354-.613l1.932-.518a.5.5 0 0 1 .62.39c.655-.079 1.35-.117 2.043-.117.72 0 1.443.041 2.12.126a.5.5 0 0 1 .622-.399l1.932.518a.5.5 0 0 1 .306.729q.211.136.373.297c.408.408.78 1.05 1.095 1.772.32.733.599 1.591.805 2.466s.34 1.78.364 2.606c.024.816-.059 1.602-.328 2.21a1.42 1.42 0 0 1-1.445.83c-.636-.067-1.115-.394-1.513-.773-.245-.232-.496-.526-.739-.808-.126-.148-.25-.292-.368-.423-.728-.804-1.597-1.527-3.224-1.527s-2.496.723-3.224 1.527c-.119.131-.242.275-.368.423-.243.282-.494.575-.739.808-.398.38-.877.706-1.513.773a1.42 1.42 0 0 1-1.445-.83c-.27-.608-.352-1.395-.329-2.21.024-.826.16-1.73.365-2.606.206-.875.486-1.733.805-2.466.315-.722.687-1.364 1.094-1.772a2.3 2.3 0 0 1 .433-.335l-.028-.079zm2.036.412c-.877.185-1.469.443-1.733.708-.276.276-.587.783-.885 1.465a14 14 0 0 0-.748 2.295 12.4 12.4 0 0 0-.339 2.406c-.022.755.062 1.368.243 1.776a.42.42 0 0 0 .426.24c.327-.034.61-.199.929-.502.212-.202.4-.423.615-.674.133-.156.276-.323.44-.504C4.861 9.969 5.978 9.027 8 9.027s3.139.942 3.965 1.855c.164.181.307.348.44.504.214.251.403.472.615.674.318.303.601.468.929.503a.42.42 0 0 0 .426-.241c.18-.408.265-1.02.243-1.776a12.4 12.4 0 0 0-.339-2.406 14 14 0 0 0-.748-2.295c-.298-.682-.61-1.19-.885-1.465-.264-.265-.856-.523-1.733-.708-.85-.179-1.877-.27-2.913-.27s-2.063.091-2.913.27"/></svg>';
 const ACCOUNT_KEY = "sleek-account";
 const HISTORY_KEY = "sleek-history";
 const HISTORY_ENABLED_KEY = "sleek-history-enabled";
@@ -505,6 +523,7 @@ function showHome(tab) {
 	const targetTab = tab || activeTab || createTab();
 	musicPage.hidden = true;
 	gamesPage.hidden = true;
+	slickPage.hidden = true;
 	gameStage.hidden = true;
 	gameStageFrame.src = "about:blank";
 	document.body.classList.add("is-home");
@@ -522,6 +541,7 @@ function showHome(tab) {
 function showMusic(tab) {
 	const targetTab = tab || activeTab || createTab();
 	gamesPage.hidden = true;
+	slickPage.hidden = true;
 	gameStage.hidden = true;
 	gameStageFrame.src = "about:blank";
 	document.body.classList.remove("is-home", "games-open");
@@ -546,6 +566,7 @@ function showGamesPage(tab) {
 	toolsPanel.hidden = true;
 	musicButton.setAttribute("aria-expanded", "false");
 	musicPage.hidden = true;
+	slickPage.hidden = true;
 	gamesPage.hidden = false;
 	gameStage.hidden = true;
 	gameStageFrame.src = "about:blank";
@@ -561,10 +582,37 @@ function showGamesPage(tab) {
 	renderGames();
 	void loadGamesCatalog();
 }
+function showSlick(tab) {
+	const targetTab = tab || activeTab || createTab();
+	document.body.classList.remove("is-home", "music-open", "games-open");
+	document.body.classList.add("slick-open");
+	toolsPanel.hidden = true;
+	musicButton.setAttribute("aria-expanded", "false");
+	musicPage.hidden = true;
+	gamesPage.hidden = true;
+	slickPage.hidden = false;
+	frameWrapper.style.display = "none";
+	loadingScreen.hidden = true;
+	if (targetTab.frameElement) targetTab.frameElement.src = "about:blank";
+	targetTab.url = slickAddress;
+	targetTab.button.querySelector(".sj-tab-title").textContent = "Slick";
+	address.value = "";
+	tabAddress.value = slickAddress;
+	activeTab = targetTab;
+	updateBookmarkState();
+	resizeSlickWaves();
+	if (!slickWaveFrame) slickWaveFrame = window.requestAnimationFrame(animateSlickWaves);
+}
 let realGames = Array.isArray(window.__SLEEK_GAMES_CATALOG__) ? window.__SLEEK_GAMES_CATALOG__ : [];
+function syncGamesMenuIcon() {
+	const menuIcon = document.querySelector('[data-panel-route="sleek://games"] .tool-icon');
+	if (menuIcon) menuIcon.innerHTML = '<i class="bi bi-controller" aria-hidden="true"></i>';
+}
+syncGamesMenuIcon();
 async function loadGamesCatalog() {
 	if (realGames.length) {
 		if (gamesStatus) gamesStatus.textContent = `${realGames.length} ported games available locally in SLEEK.`;
+		syncGamesMenuIcon();
 		renderGames();
 		return;
 	}
@@ -574,6 +622,7 @@ async function loadGamesCatalog() {
 		const catalog = await response.json();
 		if (Array.isArray(catalog) && catalog.length) {
 			realGames = catalog;
+			syncGamesMenuIcon();
 			if (gamesStatus) gamesStatus.textContent = `${catalog.length} ported games available locally in SLEEK.`;
 			renderGames();
 		}
@@ -622,14 +671,19 @@ function renderGames() {
 		card.setAttribute("aria-label", `Play ${game.title}`);
 		const cover = document.createElement("div");
 		cover.className = "game-card-cover";
+		const showGameIcon = () => {
+			cover.replaceChildren();
+			cover.innerHTML = '<i class="bi bi-controller" aria-hidden="true"></i>';
+		};
 		if (game.cover) {
 			const image = document.createElement("img");
 			image.src = game.cover;
 			image.alt = `${game.title} cover`;
 			image.loading = "lazy";
+			image.addEventListener("error", showGameIcon, { once: true });
 			cover.append(image);
 		} else {
-			cover.textContent = game.icon;
+			showGameIcon();
 		}
 		const category = document.createElement("span");
 		category.className = "game-card-category";
@@ -764,6 +818,10 @@ async function navigate(url) {
 		showGamesPage(activeTab);
 		return;
 	}
+	if (url.toLowerCase() === slickAddress) {
+		showSlick(activeTab);
+		return;
+	}
 	gamesPage.hidden = true;
 	document.body.classList.remove("is-home", "games-open");
 	if (!/^[a-z][a-z\d+.-]*:\/\//i.test(url)) {
@@ -810,6 +868,7 @@ accountPanel.addEventListener("click", (event) => {
 accountName.addEventListener("input", () => {
 	account.name = accountName.value.trim() || "Guest";
 	accountNameLabel.textContent = account.name;
+	slickGreeting.textContent = getSlickGreeting();
 	saveAccount();
 });
 historyToggle.addEventListener("change", () => {
@@ -942,6 +1001,12 @@ function openSleekPage(route) {
 		musicButton.setAttribute("aria-expanded", "false");
 		return;
 	}
+	if (nextRoute === slickAddress) {
+		showSlick(activeTab || createTab());
+		toolsPanel.hidden = true;
+		musicButton.setAttribute("aria-expanded", "false");
+		return;
+	}
 	toolsPanel.hidden = true;
 	musicButton.setAttribute("aria-expanded", "false");
 	navigate(nextRoute).catch((navigationError) => showErrorScreen(navigationError.message, navigationError.stack));
@@ -954,6 +1019,277 @@ for (const page of toolsPanel.querySelectorAll("[data-panel-route]")) {
 }
 musicClose.addEventListener("click", () => openSleekPage(homeAddress));
 gamesClose.addEventListener("click", () => openSleekPage(homeAddress));
+slickClose?.addEventListener("click", () => openSleekPage(homeAddress));
+
+const slickMenuButton = document.createElement("button");
+slickMenuButton.type = "button";
+slickMenuButton.dataset.panelRoute = slickAddress;
+slickMenuButton.innerHTML = '<span class="tool-icon"><i class="bi bi-stars" aria-hidden="true"></i></span><span><strong>Slick</strong><small>Ask AI</small></span>';
+toolsPanel.insertBefore(slickMenuButton, toolsPanel.querySelector('[data-panel-route="sleek://music"]'));
+slickMenuButton.addEventListener("click", () => openSleekPage(slickAddress));
+
+let slickConversation = [];
+const slickChats = [];
+let activeSlickChat = null;
+let slickImageData = null;
+const slickWaves = document.getElementById("sj-slick-waves");
+const slickWaveContext = slickWaves?.getContext("2d");
+let slickWaveFrame = 0;
+let slickWaveSize = { width: 0, height: 0 };
+let slickWaveFrameTime = 0;
+const slickStars = Array.from({ length: 320 }, (_, index) => ({
+	x: (((index * 47) % 110) - 55) / 100,
+	y: (((index * 83) % 110) - 55) / 100,
+	z: 0.65 + ((index * 37) % 35) / 100,
+	speed: 0.22 + (index % 5) * 0.035,
+}));
+function resizeSlickWaves() {
+	if (!slickWaves || !slickWaveContext) return;
+	const bounds = slickWaves.getBoundingClientRect();
+	const ratio = Math.min(window.devicePixelRatio || 1, 2);
+	slickWaveSize = { width: bounds.width, height: bounds.height };
+	slickWaves.width = Math.max(1, Math.floor(bounds.width * ratio));
+	slickWaves.height = Math.max(1, Math.floor(bounds.height * ratio));
+	slickWaveContext.setTransform(ratio, 0, 0, ratio, 0, 0);
+}
+function animateSlickWaves(time) {
+	if (!slickWaveContext || !slickWaves || !document.body.classList.contains("slick-open")) {
+		slickWaveFrame = 0;
+		return;
+	}
+	const { width, height } = slickWaveSize;
+	if (!width || !height) resizeSlickWaves();
+	slickWaveContext.clearRect(0, 0, width, height);
+	const frameDelta = Math.min(40, slickWaveFrameTime ? time - slickWaveFrameTime : 16);
+	slickWaveFrameTime = time;
+	const centerX = width / 2;
+	const centerY = height / 2;
+	const perspective = Math.min(width, height) * 0.9;
+	for (const star of slickStars) {
+		const previousZ = Math.min(1, star.z + star.speed * 0.055);
+		star.z -= star.speed * frameDelta / 1000;
+		const projectedX = centerX + (star.x / star.z) * perspective;
+		const projectedY = centerY + (star.y / star.z) * perspective;
+		if (star.z <= 0.03 || projectedX < -120 || projectedX > width + 120 || projectedY < -120 || projectedY > height + 120) {
+			star.z = 1;
+			star.x = (((star.x * 173 + 41) % 110) - 55) / 100;
+			star.y = (((star.y * 137 + 67) % 110) - 55) / 100;
+		}
+		if (projectedX < -80 || projectedX > width + 80 || projectedY < -80 || projectedY > height + 80) continue;
+		const previousX = centerX + (star.x / previousZ) * perspective;
+		const previousY = centerY + (star.y / previousZ) * perspective;
+		const depth = 1 - star.z;
+		const radius = 0.65 + depth * 2.4;
+		slickWaveContext.beginPath();
+		slickWaveContext.moveTo(previousX, previousY);
+		slickWaveContext.lineTo(projectedX, projectedY);
+		slickWaveContext.strokeStyle = `rgba(255, 255, 255, ${0.18 + depth * 0.62})`;
+		slickWaveContext.lineWidth = radius;
+		slickWaveContext.stroke();
+	}
+	slickWaveFrame = window.requestAnimationFrame(animateSlickWaves);
+}
+function ensureSlickStarfield() {
+	resizeSlickWaves();
+	if (!slickWaveFrame) slickWaveFrame = window.requestAnimationFrame(animateSlickWaves);
+}
+window.addEventListener("resize", resizeSlickWaves);
+ensureSlickStarfield();
+function clearSlickAttachment() {
+	if (slickImage) slickImage.value = "";
+	slickImageData = null;
+	if (slickAttachment) slickAttachment.hidden = true;
+	if (slickAttachmentPreview) slickAttachmentPreview.removeAttribute("src");
+	if (slickAttachmentName) slickAttachmentName.textContent = "";
+}
+slickAttachmentRemove?.addEventListener("click", () => {
+	clearSlickAttachment();
+	slickStatus.textContent = "Powered by OpenRouter";
+});
+slickImage?.addEventListener("change", () => {
+	const file = slickImage.files?.[0];
+	if (!file) {
+		clearSlickAttachment();
+		slickStatus.textContent = "Powered by OpenRouter";
+		return;
+	}
+	if (!file.type.startsWith("image/")) {
+		clearSlickAttachment();
+		slickStatus.textContent = "Please choose an image file.";
+		return;
+	}
+	const reader = new FileReader();
+	reader.addEventListener("load", () => {
+		slickImageData = { name: file.name, dataUrl: String(reader.result || "") };
+		if (slickAttachmentPreview) slickAttachmentPreview.src = slickImageData.dataUrl;
+		if (slickAttachmentName) slickAttachmentName.textContent = file.name;
+		if (slickAttachment) slickAttachment.hidden = false;
+		slickStatus.textContent = `Image attached: ${file.name}`;
+	});
+	reader.readAsDataURL(file);
+});
+function renderSlickMarkdown(text) {
+	const escaped = text.replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[character]));
+	const inlineMarkdown = (line) => line
+		.replace(/`([^`]+)`/g, "<code>$1</code>")
+		.replace(/\*\*([^*\n]+)\*\*/g, "<strong>$1</strong>")
+		.replace(/__([^_\n]+)__/g, "<strong>$1</strong>")
+		.replace(/\*([^*\n]+)\*/g, "<em>$1</em>")
+		.replace(/_([^_\n]+)_/g, "<em>$1</em>");
+	return escaped.split("\n").map((line) => {
+		const heading = line.match(/^(#{1,6})\s+(.+)$/);
+		if (heading) return `<h${heading[1].length}>${inlineMarkdown(heading[2])}</h${heading[1].length}>`;
+		return inlineMarkdown(line);
+	}).join("\n");
+}
+function addSlickMessage(role, text, imageData = null) {
+	const message = document.createElement("div");
+	message.className = `slick-message slick-message-${role}`;
+	const label = document.createElement("strong");
+	label.textContent = role === "user" ? "You" : "Slick";
+	const content = document.createElement("div");
+	content.className = "slick-message-content";
+	const textNode = document.createElement("div");
+	if (role === "assistant") textNode.innerHTML = renderSlickMarkdown(text);
+	else textNode.textContent = text;
+	content.append(textNode);
+	message.append(label, content);
+	if (imageData && role === "user") {
+		const group = document.createElement("div");
+		group.className = "slick-message-user-group";
+		const image = document.createElement("img");
+		image.className = "slick-message-image";
+		image.src = imageData.dataUrl;
+		image.alt = imageData.name ? `Attached image: ${imageData.name}` : "Attached image";
+		group.append(image, message);
+		slickMessages.append(group);
+	} else {
+		slickMessages.append(message);
+	}
+	slickMessages.scrollTop = slickMessages.scrollHeight;
+}
+function addSlickThinking() {
+	const message = document.createElement("div");
+	message.className = "slick-message slick-message-assistant slick-thinking";
+	const label = document.createElement("strong");
+	label.textContent = "Slick";
+	const content = document.createElement("div");
+	content.className = "slick-message-content";
+	content.innerHTML = '<span class="slick-thinking-label">Slick is thinking</span><span class="slick-thinking-dots" aria-label="Loading"><i></i><i></i><i></i></span>';
+	message.append(label, content);
+	slickMessages.append(message);
+	slickMessages.scrollTop = slickMessages.scrollHeight;
+	return message;
+}
+function resetSlickChatView() {
+	slickMessages.replaceChildren();
+	slickMessages.classList.add("slick-messages-empty");
+	slickPage.classList.remove("slick-has-messages");
+}
+function getSlickGreeting() {
+	return "Hi, what's on your mind?";
+}
+function renderSlickChatList() {
+	slickChatList.replaceChildren();
+	const query = slickChatSearch?.value.trim().toLowerCase() || "";
+	for (const chat of slickChats.filter((item) => !query || item.title.toLowerCase().includes(query))) {
+		const button = document.createElement("button");
+		button.className = `slick-chat-item${chat === activeSlickChat ? " active" : ""}`;
+		button.type = "button";
+		button.innerHTML = '<i class="bi bi-chat-left-text" aria-hidden="true"></i><span></span>';
+		button.querySelector("span").textContent = chat.title;
+		button.addEventListener("click", () => selectSlickChat(chat));
+		slickChatList.append(button);
+	}
+}
+function selectSlickChat(chat) {
+	if (!chat || chat === activeSlickChat && slickConversation === chat.messages) return;
+	activeSlickChat = chat;
+	slickConversation = chat.messages;
+	slickMessages.replaceChildren();
+	if (!chat.messages.length) {
+		resetSlickChatView();
+	} else {
+		slickMessages.classList.remove("slick-messages-empty");
+		slickPage.classList.add("slick-has-messages");
+		for (const message of chat.messages) {
+			if (message.role === "assistant") {
+				addSlickMessage("assistant", message.content);
+				continue;
+			}
+			if (Array.isArray(message.content)) {
+				const textPart = message.content.find((part) => part.type === "text");
+				const imagePart = message.content.find((part) => part.type === "image_url");
+				addSlickMessage("user", textPart?.text || "Analyze this image.", imagePart ? { dataUrl: imagePart.image_url.url, name: "Attached image" } : null);
+			} else {
+				addSlickMessage("user", message.content);
+			}
+		}
+	}
+	renderSlickChatList();
+}
+function startSlickChat() {
+	const chat = { id: crypto.randomUUID?.() || String(Date.now()), title: "New chat", messages: [] };
+	slickChats.unshift(chat);
+	selectSlickChat(chat);
+}
+slickGreeting.textContent = getSlickGreeting();
+const firstSlickChat = { id: "first", title: "New chat", messages: slickConversation };
+activeSlickChat = firstSlickChat;
+slickChats.push(firstSlickChat);
+renderSlickChatList();
+slickNewChat.addEventListener("click", startSlickChat);
+slickSidebarToggle?.addEventListener("click", () => {
+	const collapsed = slickPage.classList.toggle("slick-sidebar-collapsed");
+	slickSidebarToggle.setAttribute("aria-label", collapsed ? "Expand sidebar" : "Collapse sidebar");
+	slickSidebarToggle.setAttribute("title", collapsed ? "Expand sidebar" : "Collapse sidebar");
+});
+slickChatSearch?.addEventListener("input", renderSlickChatList);
+document.querySelectorAll("[data-slick-prompt]").forEach((prompt) => {
+	prompt.addEventListener("click", () => {
+		slickInput.value = prompt.dataset.slickPrompt || "";
+		slickInput.focus();
+	});
+});
+slickForm.addEventListener("submit", async (event) => {
+	event.preventDefault();
+	const content = slickInput.value.trim();
+	if ((!content && !slickImageData) || slickForm.dataset.busy === "true") return;
+	slickForm.dataset.busy = "true";
+	slickMessages.classList.remove("slick-messages-empty");
+	slickPage.classList.add("slick-has-messages");
+	ensureSlickStarfield();
+	slickInput.value = "";
+	const attachedImage = slickImageData;
+	clearSlickAttachment();
+	addSlickMessage("user", content || (attachedImage ? "Analyze this image" : ""), attachedImage);
+	const userMessage = attachedImage
+		? { role: "user", content: [{ type: "text", text: content || "Analyze this image." }, { type: "image_url", image_url: { url: attachedImage.dataUrl } }] }
+		: { role: "user", content };
+	slickConversation.push(userMessage);
+	if (activeSlickChat && activeSlickChat.title === "New chat") {
+		activeSlickChat.title = (content || "Image conversation").slice(0, 32);
+		renderSlickChatList();
+	}
+	const thinkingMessage = addSlickThinking();
+	slickStatus.textContent = "Slick is thinking...";
+	try {
+		const response = await fetch("/api/slick/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ messages: slickConversation }) });
+		const payload = await response.json();
+		if (!response.ok) throw new Error(payload.error || "Slick could not answer.");
+		thinkingMessage.remove();
+		addSlickMessage("assistant", payload.reply);
+		slickConversation.push({ role: "assistant", content: payload.reply });
+		slickStatus.textContent = "Powered by OpenRouter";
+	} catch (error) {
+		thinkingMessage.remove();
+		addSlickMessage("assistant", error instanceof Error ? error.message : "Slick could not answer.");
+		slickStatus.textContent = "Check your OpenRouter settings in .env.";
+	} finally {
+		slickForm.dataset.busy = "false";
+		slickInput.focus();
+	}
+});
 gameStageBack.addEventListener("click", closeGame);
 gameStageFullscreen.addEventListener("click", () => {
 		void (gameStage.requestFullscreen?.() || gameStageFrame.requestFullscreen?.());
