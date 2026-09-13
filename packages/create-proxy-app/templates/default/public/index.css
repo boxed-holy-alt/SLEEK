@@ -2,6 +2,7 @@
 
 body {
 	--accent: #ffffff;
+	position: relative;
 	font-family: "Roboto", Arial, Helvetica, sans-serif;
 	margin: 0;
 	background: #000;
@@ -15,8 +16,36 @@ body {
 }
 body[data-theme="forest"] { background: #06110d; } body[data-theme="sunset"] { background: #160b08; } body[data-theme="light"] { background: #e8ebf0; color: #111; } body[data-theme="light"] .logo-wrapper h1 { color: #111; } #sj-tab-address-bar button { color: var(--accent); } #sj-settings-panel .settings-nav-item.active, #sj-settings-panel .theme-choice.active, #sj-settings-panel .density-choice.active { border-color: var(--accent); } #sj-settings-panel .settings-action, #sj-settings-panel .settings-footer button { border-color: var(--accent); } .settings-text-field { display: grid; gap: 8px; padding: 16px 0; border-bottom: 1px solid #222; color: #bbb; } .settings-text-field input { width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid #333; border-radius: 6px; background: #080808; color: #eee; font: inherit; } .accent-options { display: flex; flex-wrap: wrap; gap: 8px; max-width: 220px; } .accent-choice { width: 24px; height: 24px; padding: 0; border: 2px solid transparent; border-radius: 50%; background: var(--swatch); cursor: pointer; } .accent-choice.active { border-color: #fff; box-shadow: 0 0 0 2px var(--swatch); } .settings-upload { display: grid; gap: 6px; margin-top: 20px; padding: 16px; border: 1px dashed #444; border-radius: 8px; color: #eee; cursor: pointer; } .settings-upload small, .settings-upload-status { color: #777; font-size: 12px; } .settings-upload input { display: none; } .settings-upload-button { color: var(--accent); }
 
-body::before { content: ""; position: fixed; inset: 42px 0 0; pointer-events: none; opacity: 0.48; background-image: radial-gradient(circle, rgba(255, 255, 255, 0.7) 2px, transparent 2.5px), radial-gradient(circle, rgba(126, 181, 255, 0.6) 1.5px, transparent 2px), radial-gradient(circle, rgba(255, 255, 255, 0.38) 1px, transparent 1.5px); background-position: 0 0, 31px 47px, 14px 32px; background-size: 137px 131px, 211px 173px, 97px 113px; animation: particle-drift 24s linear infinite; }
-body::after { content: ""; position: fixed; inset: 42px 0 0; pointer-events: none; opacity: 0.32; background-image: radial-gradient(circle, rgba(255, 255, 255, 0.55) 2.5px, transparent 3px); background-size: 197px 223px; background-position: 74px 18px; animation: particle-float 32s ease-in-out infinite alternate; }
+body::before {
+	content: "";
+	position: absolute;
+	left: 50%;
+	top: 42px;
+	transform: translateX(-50%);
+	width: min(1200px, calc(100% - 64px));
+	height: calc(100vh - 42px);
+	pointer-events: none;
+	opacity: 0.48;
+	background-image: radial-gradient(circle, rgba(255, 255, 255, 0.7) 2px, transparent 2.5px), radial-gradient(circle, rgba(126, 181, 255, 0.6) 1.5px, transparent 2px), radial-gradient(circle, rgba(255, 255, 255, 0.38) 1px, transparent 1.5px);
+	background-position: 0 0, 31px 47px, 14px 32px;
+	background-size: 137px 131px, 211px 173px, 97px 113px;
+	animation: particle-drift 24s linear infinite;
+}
+body::after {
+	content: "";
+	position: absolute;
+	left: 50%;
+	top: 42px;
+	transform: translateX(-50%);
+	width: min(1200px, calc(100% - 64px));
+	height: calc(100vh - 42px);
+	pointer-events: none;
+	opacity: 0.32;
+	background-image: radial-gradient(circle, rgba(255, 255, 255, 0.55) 2.5px, transparent 3px);
+	background-size: 197px 223px;
+	background-position: 74px 18px;
+	animation: particle-float 32s ease-in-out infinite alternate;
+}
 @keyframes particle-drift { from { background-position: 0 0, 31px 47px, 14px 32px; } to { background-position: 137px 131px, -180px 220px, -70px 150px; } }
 @keyframes particle-float { from { transform: translate3d(0, 0, 0); } to { transform: translate3d(18px, -24px, 0); } }
 

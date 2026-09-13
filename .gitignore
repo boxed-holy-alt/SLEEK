@@ -1,7 +1,11 @@
 node_modules
 .env
 .env.*
-!.env.example
+secrets.json
+**/secrets.json
+**/*.local.json
+proxy/public/runtime-config.js
+!**/*.example.json
 dist
 packages/core/rewriter/target
 packages/core/rewriter/wasm/out

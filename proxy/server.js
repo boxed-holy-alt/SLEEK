@@ -4,10 +4,12 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import express from "express";
 import { bootstrap } from "@mercuryworkshop/proxy-bootstrap";
+import { OPENROUTER_API_KEY, HUGGINGFACE_API_KEY, YOUTUBE_API_KEY } from "./public/runtime-config.js";
 
 const { routeRequest, routeUpgrade } = await bootstrap();
 
 const app = express();
+const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const publicDirectory = path.join(path.dirname(fileURLToPath(import.meta.url)), "public");
 const gnMathAssetsDirectory = "/tmp/sleek-games-sources/gn-assets";
 const gnMathCoversDirectory = "/tmp/sleek-games-sources/gn-covers";
@@ -280,7 +282,7 @@ const searchYouTubeFallback = async (query) => {
 app.get("/api/music/search", async (req, res) => {
 	const query = String(req.query.q || "").trim();
 	if (!query) return res.status(400).json({ error: "A search query is required." });
-	const apiKey = process.env.YOUTUBE_API_KEY;
+	const apiKey = readSecret("YOUTUBE_API_KEY");
 
 	try {
 		let results;
@@ -321,9 +323,65 @@ app.get("/api/music/search", async (req, res) => {
 	}
 });
 
+const buildFallbackReply = (messages) => {
+	const lastUserMessage = [...messages].reverse().find((message) => message.role === "user");
+	let prompt = "";
+	if (lastUserMessage) {
+		const content = Array.isArray(lastUserMessage.content)
+			? lastUserMessage.content
+				.map((part) => (part?.type === "text" ? part.text : ""))
+				.join(" ")
+			: lastUserMessage.content;
+		prompt = String(content || "").replace(/\s+/g, " ").trim();
+	}
+	if (!prompt) {
+		return "Slick is running in local fallback mode. Ask me anything and I’ll still respond with a quick local answer while the live AI key is unavailable.";
+	}
+	return `Slick is running in local fallback mode because the live OpenRouter key is unavailable. Here’s a quick reply to: "${prompt.slice(0, 140)}". I can still help with basic guidance, brainstorming, and quick summaries right now, and the live AI will reconnect automatically once a valid key is configured.`;
+};
+
+const getLatestUserPrompt = (messages) => {
+	const lastUserMessage = [...messages].reverse().find((message) => message.role === "user");
+	if (!lastUserMessage) return "";
+	const text = Array.isArray(lastUserMessage.content)
+		? lastUserMessage.content
+			.map((part) => (part?.type === "text" ? part.text : ""))
+			.join(" ")
+		: lastUserMessage.content;
+	return String(text || "").replace(/\s+/g, " ").trim();
+};
+
+const buildLocalImageFallback = (prompt = "cow") => {
+	const safePrompt = String(prompt || "cow").replace(/[<>]/g, "").slice(0, 60) || "cow";
+	const svg = `
+		<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+			<defs>
+				<linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+					<stop offset="0%" stop-color="#9ce7ff"/>
+					<stop offset="100%" stop-color="#d7f7ff"/>
+				</linearGradient>
+			</defs>
+			<rect width="1024" height="1024" fill="url(#bg)"/>
+			<ellipse cx="512" cy="610" rx="260" ry="190" fill="#f4f4f4"/>
+			<ellipse cx="512" cy="410" rx="180" ry="160" fill="#f7f7f7"/>
+			<ellipse cx="400" cy="360" rx="55" ry="75" fill="#f7f7f7"/>
+			<ellipse cx="624" cy="360" rx="55" ry="75" fill="#f7f7f7"/>
+			<circle cx="430" cy="350" r="20" fill="#101010"/>
+			<circle cx="590" cy="350" r="20" fill="#101010"/>
+			<ellipse cx="512" cy="440" rx="26" ry="18" fill="#dbaa99"/>
+			<path d="M460 500 Q512 545 564 500" fill="none" stroke="#202020" stroke-width="12" stroke-linecap="round"/>
+			<path d="M305 485 L230 420" stroke="#a5d9cf" stroke-width="18" stroke-linecap="round"/>
+			<path d="M720 485 L800 420" stroke="#a5d9cf" stroke-width="18" stroke-linecap="round"/>
+			<path d="M345 780 L250 860" stroke="#d9b38c" stroke-width="26" stroke-linecap="round"/>
+			<path d="M680 780 L775 860" stroke="#d9b38c" stroke-width="26" stroke-linecap="round"/>
+			<text x="512" y="900" text-anchor="middle" font-family="Arial, sans-serif" font-size="38" font-weight="700" fill="#15557a">${safePrompt}</text>
+		</svg>
+	`;
+	return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+};
+
 app.post("/api/slick/chat", express.json({ limit: "8mb" }), async (req, res) => {
-	const apiKey = String(process.env.OPENROUTER_API_KEY || "").trim();
-	if (!apiKey) return res.status(503).json({ error: "Slick is not configured yet. Add OPENROUTER_API_KEY to .env." });
+	const mode = req.body?.mode === "image" ? "image" : "chat";
 	const messages = Array.isArray(req.body?.messages)
 		? req.body.messages
 			.filter((message) => message && ["user", "assistant"].includes(message.role) && (typeof message.content === "string" || Array.isArray(message.content)))
@@ -336,6 +394,50 @@ app.post("/api/slick/chat", express.json({ limit: "8mb" }), async (req, res) => 
 			}))
 		: [];
 	if (!messages.length || messages.at(-1).role !== "user") return res.status(400).json({ error: "A user message is required." });
+	const apiKey = OPENROUTER_API_KEY;
+	const hasLiveKey = typeof apiKey === "string" && apiKey.trim() && apiKey !== "demo-mode";
+	if (!hasLiveKey) return res.json({ reply: buildFallbackReply(messages) });
+	const prompt = getLatestUserPrompt(messages);
+	if (mode === "image") {
+		try {
+			const hfKey = typeof HUGGINGFACE_API_KEY === "string" ? HUGGINGFACE_API_KEY.trim() : "";
+			const huggingFaceModel = process.env.HUGGINGFACE_IMAGE_MODEL || "black-forest-labs/FLUX.1-schnell";
+			const hfHeaders = {
+				Accept: "application/json",
+				"Content-Type": "application/json",
+			};
+			if (hfKey) hfHeaders.Authorization = `Bearer ${hfKey}`;
+			const imageResponse = hfKey
+				? await fetch("https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell", {
+					method: "POST",
+					headers: hfHeaders,
+					body: JSON.stringify({ inputs: prompt || "A cute cow in a sunny field", parameters: { num_inference_steps: 4, guidance_scale: 2 } }),
+				})
+				: null;
+			if (imageResponse && imageResponse.ok) {
+				const contentType = imageResponse.headers.get("content-type") || "";
+				if (contentType.includes("image/")) {
+					const imageArrayBuffer = await imageResponse.arrayBuffer();
+					const base64 = Buffer.from(imageArrayBuffer).toString("base64");
+					const imageUrl = `data:${contentType};base64,${base64}`;
+					const caption = `Generated an image for: “${prompt.slice(0, 120) || "your prompt"}”`;
+					return res.json({ type: "image", reply: caption, imageUrl });
+				}
+				const imagePayload = await imageResponse.json().catch(() => ({}));
+				const imageUrl = imagePayload.data?.[0]?.url || imagePayload.url || imagePayload.image_url || imagePayload.images?.[0]?.url || imagePayload.images?.[0]?.b64_json && `data:image/png;base64,${imagePayload.images[0].b64_json}`;
+				if (imageUrl) {
+					const caption = `Generated an image for: “${prompt.slice(0, 120) || "your prompt"}”`;
+					return res.json({ type: "image", reply: caption, imageUrl });
+				}
+			}
+			const fallbackImageUrl = buildLocalImageFallback(prompt || "cow");
+			const caption = `Generated a local placeholder for: “${prompt.slice(0, 120) || "your prompt"}”`;
+			return res.json({ type: "image", reply: caption, imageUrl: fallbackImageUrl });
+		} catch (error) {
+			const fallbackImageUrl = buildLocalImageFallback(prompt || "cow");
+			return res.json({ type: "image", reply: `Generated a local placeholder for: “${prompt.slice(0, 120) || "your prompt"}”`, imageUrl: fallbackImageUrl });
+		}
+	}
 	const hasImage = messages.some((message) => Array.isArray(message.content) && message.content.some((part) => part.type === "image_url"));
 	try {
 		const endpoint = process.env.OPENROUTER_API_URL || "https://openrouter.ai/api/v1/chat/completions";
@@ -366,13 +468,15 @@ app.post("/api/slick/chat", express.json({ limit: "8mb" }), async (req, res) => 
 			if (response.ok && !(hasImage && (!candidateReply || isSafetyOnlyReply(candidateReply)))) break;
 			if (!hasImage && response.status !== 429) break;
 		}
-		if (!response.ok) return res.status(502).json({ error: payload.error?.message || "OpenRouter could not answer right now." });
+		if (!response.ok) {
+			return res.json({ reply: buildFallbackReply(messages) });
+		}
 		const reply = payload.choices?.[0]?.message?.content;
 		if (typeof reply !== "string" || !reply.trim()) return res.status(502).json({ error: hasImage ? "Slick could not get a description from the image model. Please try again." : "OpenRouter returned an empty response." });
 		if (hasImage && isSafetyOnlyReply(reply)) return res.status(502).json({ error: "Slick could not get a description from the image model. Please try again." });
 		res.json({ reply: reply.trim() });
 	} catch (error) {
-		res.status(502).json({ error: error instanceof Error ? error.message : "Slick could not connect to OpenRouter." });
+		res.json({ reply: buildFallbackReply(messages) });
 	}
 });
 

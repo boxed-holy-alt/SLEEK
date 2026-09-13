@@ -1,5 +1,6 @@
 const form = document.getElementById("sj-form");
 const address = document.getElementById("sj-address");
+const homeParticlesCanvas = document.getElementById("sj-home-particles");
 const frameWrapper = document.getElementById("sj-frame-wrapper");
 const loadingScreen = document.getElementById("sj-loading");
 const tabsElement = document.getElementById("sj-tabs");
@@ -519,15 +520,19 @@ quickLinks.addEventListener("click", openQuickLink);
 savedLinks.addEventListener("click", openQuickLink);
 document.body.classList.add("is-home");
 renderQuickLinks();
-function showHome(tab) {
-	const targetTab = tab || activeTab || createTab();
+function hideOverlayPanels() {
 	musicPage.hidden = true;
 	gamesPage.hidden = true;
 	slickPage.hidden = true;
 	gameStage.hidden = true;
 	gameStageFrame.src = "about:blank";
+	document.body.classList.remove("music-open", "games-open", "slick-open");
+}
+
+function showHome(tab) {
+	const targetTab = tab || activeTab || createTab();
+	hideOverlayPanels();
 	document.body.classList.add("is-home");
-	document.body.classList.remove("music-open", "games-open");
 	if (targetTab.frameElement) targetTab.frameElement.src = "about:blank";
 	targetTab.url = homeAddress;
 	targetTab.button.querySelector(".sj-tab-title").textContent = "New tab";
@@ -822,8 +827,8 @@ async function navigate(url) {
 		showSlick(activeTab);
 		return;
 	}
-	gamesPage.hidden = true;
-	document.body.classList.remove("is-home", "games-open");
+	hideOverlayPanels();
+	document.body.classList.remove("is-home");
 	if (!/^[a-z][a-z\d+.-]*:\/\//i.test(url)) {
 		const looksLikeHost = url.includes(".") || url.startsWith("localhost:") || url.startsWith("[");
 		if (looksLikeHost) url = `https://${url}`;
@@ -912,9 +917,70 @@ document.getElementById("sj-settings-close").addEventListener("click", closeSett
 settingsPanel.addEventListener("click", (event) => {
 	if (event.target === settingsPanel) closeSettings();
 });
+let homeParticleField = [];
+let homeParticleAnimation = null;
+
+function initializeHomeParticles() {
+	if (!homeParticlesCanvas) return;
+	const context = homeParticlesCanvas.getContext("2d");
+	if (!context) return;
+	const updateSize = () => {
+		const width = window.innerWidth;
+		const height = window.innerHeight - 42;
+		homeParticlesCanvas.width = width;
+		homeParticlesCanvas.height = height;
+		const particleCount = Math.min(160, Math.max(90, Math.round((width * height) / 16)));
+		homeParticleField = Array.from({ length: particleCount }, () => ({
+			x: Math.random() * width,
+			y: Math.random() * height,
+			dx: (Math.random() - 0.5) * 0.8,
+			dy: (Math.random() - 0.5) * 0.8,
+			radius: Math.random() * 2.2 + 1.2,
+			alpha: Math.random() * 0.7 + 0.25,
+		}));
+	};
+	const render = () => {
+		if (!homeParticlesCanvas || !document.body.classList.contains("is-home") || document.body.classList.contains("particles-off")) {
+			if (homeParticleAnimation) {
+				cancelAnimationFrame(homeParticleAnimation);
+				homeParticleAnimation = null;
+			}
+			return;
+		}
+		const width = homeParticlesCanvas.width;
+		const height = homeParticlesCanvas.height;
+		context.clearRect(0, 0, width, height);
+		for (const particle of homeParticleField) {
+			particle.x += particle.dx;
+			particle.y += particle.dy;
+			if (particle.x < -4) particle.x = width + 4;
+			if (particle.x > width + 4) particle.x = -4;
+			if (particle.y < -4) particle.y = height + 4;
+			if (particle.y > height + 4) particle.y = -4;
+			context.beginPath();
+			context.fillStyle = `rgba(255, 255, 255, ${particle.alpha})`;
+			context.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2);
+			context.fill();
+		}
+		homeParticleAnimation = requestAnimationFrame(render);
+	};
+	updateSize();
+	if (homeParticleAnimation) cancelAnimationFrame(homeParticleAnimation);
+	homeParticleAnimation = requestAnimationFrame(render);
+	window.addEventListener("resize", updateSize, { passive: true });
+}
+
 particlesToggle.addEventListener("change", () => {
 	document.body.classList.toggle("particles-off", !particlesToggle.checked);
+	if (particlesToggle.checked && document.body.classList.contains("is-home")) {
+		initializeHomeParticles();
+	} else if (homeParticleAnimation) {
+		cancelAnimationFrame(homeParticleAnimation);
+		homeParticleAnimation = null;
+	}
 });
+
+initializeHomeParticles();
 animationsToggle.addEventListener("change", () => document.body.classList.toggle("animations-off", !animationsToggle.checked));
 compactToggle.addEventListener("change", () => document.body.classList.toggle("compact-home", compactToggle.checked));
 const settingsNav = document.querySelector(".settings-nav");
@@ -1037,12 +1103,18 @@ const slickWaveContext = slickWaves?.getContext("2d");
 let slickWaveFrame = 0;
 let slickWaveSize = { width: 0, height: 0 };
 let slickWaveFrameTime = 0;
-const slickStars = Array.from({ length: 320 }, (_, index) => ({
-	x: (((index * 47) % 110) - 55) / 100,
-	y: (((index * 83) % 110) - 55) / 100,
-	z: 0.65 + ((index * 37) % 35) / 100,
-	speed: 0.22 + (index % 5) * 0.035,
-}));
+function createSlickStar() {
+	return {
+		x: (Math.random() * 2 - 1) * 1.35,
+		y: (Math.random() * 2 - 1) * 1.35,
+		z: Math.random() * 1.05 + 0.15,
+		speed: 0.28 + Math.random() * 0.45,
+	};
+}
+const slickStars = Array.from({ length: 260 }, () => createSlickStar());
+function resetSlickStar(star) {
+	Object.assign(star, createSlickStar());
+}
 function resizeSlickWaves() {
 	if (!slickWaves || !slickWaveContext) return;
 	const bounds = slickWaves.getBoundingClientRect();
@@ -1053,7 +1125,7 @@ function resizeSlickWaves() {
 	slickWaveContext.setTransform(ratio, 0, 0, ratio, 0, 0);
 }
 function animateSlickWaves(time) {
-	if (!slickWaveContext || !slickWaves || !document.body.classList.contains("slick-open")) {
+	if (!slickWaveContext || !slickWaves || slickPage.hidden || !document.body.classList.contains("slick-open")) {
 		slickWaveFrame = 0;
 		return;
 	}
@@ -1066,19 +1138,17 @@ function animateSlickWaves(time) {
 	const centerY = height / 2;
 	const perspective = Math.min(width, height) * 0.9;
 	for (const star of slickStars) {
-		const previousZ = Math.min(1, star.z + star.speed * 0.055);
+		const previousZ = Math.max(0.12, star.z);
 		star.z -= star.speed * frameDelta / 1000;
-		const projectedX = centerX + (star.x / star.z) * perspective;
-		const projectedY = centerY + (star.y / star.z) * perspective;
-		if (star.z <= 0.03 || projectedX < -120 || projectedX > width + 120 || projectedY < -120 || projectedY > height + 120) {
-			star.z = 1;
-			star.x = (((star.x * 173 + 41) % 110) - 55) / 100;
-			star.y = (((star.y * 137 + 67) % 110) - 55) / 100;
+		const projectedX = centerX + (star.x / Math.max(0.12, star.z)) * perspective;
+		const projectedY = centerY + (star.y / Math.max(0.12, star.z)) * perspective;
+		if (star.z <= 0.12 || projectedX < -120 || projectedX > width + 120 || projectedY < -120 || projectedY > height + 120) {
+			resetSlickStar(star);
+			continue;
 		}
-		if (projectedX < -80 || projectedX > width + 80 || projectedY < -80 || projectedY > height + 80) continue;
 		const previousX = centerX + (star.x / previousZ) * perspective;
 		const previousY = centerY + (star.y / previousZ) * perspective;
-		const depth = 1 - star.z;
+		const depth = 1 - Math.min(1, star.z / 1.2);
 		const radius = 0.65 + depth * 2.4;
 		slickWaveContext.beginPath();
 		slickWaveContext.moveTo(previousX, previousY);
@@ -1091,7 +1161,9 @@ function animateSlickWaves(time) {
 }
 function ensureSlickStarfield() {
 	resizeSlickWaves();
-	if (!slickWaveFrame) slickWaveFrame = window.requestAnimationFrame(animateSlickWaves);
+	if (!slickPage.hidden && !slickWaveFrame && document.body.classList.contains("slick-open")) {
+		slickWaveFrame = window.requestAnimationFrame(animateSlickWaves);
+	}
 }
 window.addEventListener("resize", resizeSlickWaves);
 ensureSlickStarfield();
@@ -1251,6 +1323,25 @@ document.querySelectorAll("[data-slick-prompt]").forEach((prompt) => {
 		slickInput.focus();
 	});
 });
+function addSlickGeneratedImage(replyText, imageUrl) {
+	const wrapper = document.createElement("div");
+	wrapper.className = "slick-message slick-message-assistant";
+	const label = document.createElement("strong");
+	label.textContent = "Slick";
+	const content = document.createElement("div");
+	content.className = "slick-message-content";
+	const image = document.createElement("img");
+	image.className = "slick-message-image";
+	image.src = imageUrl;
+	image.alt = replyText || "Generated image";
+	const caption = document.createElement("div");
+	caption.innerHTML = renderSlickMarkdown(replyText || "Generated image");
+	content.append(image, caption);
+	wrapper.append(label, content);
+	slickMessages.append(wrapper);
+	slickMessages.scrollTop = slickMessages.scrollHeight;
+}
+
 slickForm.addEventListener("submit", async (event) => {
 	event.preventDefault();
 	const content = slickInput.value.trim();
@@ -1268,7 +1359,7 @@ slickForm.addEventListener("submit", async (event) => {
 		: { role: "user", content };
 	slickConversation.push(userMessage);
 	if (activeSlickChat && activeSlickChat.title === "New chat") {
-		activeSlickChat.title = (content || "Image conversation").slice(0, 32);
+		activeSlickChat.title = (content || "Chat message").slice(0, 32);
 		renderSlickChatList();
 	}
 	const thinkingMessage = addSlickThinking();
